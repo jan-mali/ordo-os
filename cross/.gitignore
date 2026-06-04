@@ -1,0 +1,6 @@
+*.tar.gz
+gcc-15.2.0/
+binutils-2.45/
+*-build/
+prefix/
+a.out
