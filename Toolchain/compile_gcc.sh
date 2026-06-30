@@ -10,7 +10,7 @@ mkdir -p gcc-build
 tar -xzvf gcc-15.2.0.tar.gz
 
 cd gcc-build
-../gcc-15.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --disable-hosted-libstdcxx
+../gcc-15.2.0/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers --disable-hosted-libstdcxx CXXFLAGS="-g -O2 -fno-char8_t"
 
 MAKEOPTS="-j `nproc`"
 
