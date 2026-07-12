@@ -1,5 +1,6 @@
 #include <Core/TextConsole.hpp>
 #include <default8x16_psfu.hpp>
+#include <Core/memory.hpp>
 
 TextConsole text_console;
 
@@ -42,8 +43,11 @@ void TextConsole::putc(char c) {
     if (c == '\n') {
         cursor_x = 0;
         if (++cursor_y >= rows) {
-            // TODO: Scroll :)
-            cursor_y = 0;
+            memmove(text, text + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(char));
+            memmove(foreground, foreground + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(uint32_t));
+            memmove(background, background + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(uint32_t));
+            cursor_y = rows - 1;
+            draw();
         }
         return;
     }
@@ -57,8 +61,11 @@ void TextConsole::putc(char c) {
     if (++cursor_x >= columns) {
         cursor_x = 0;
         if (++cursor_y >= rows) {
-            // TODO: Scroll :)
-            cursor_y = 0;
+            memmove(text, text + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(char));
+            memmove(foreground, foreground + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(uint32_t));
+            memmove(background, background + MAX_CONSOLE_WIDTH, (MAX_CONSOLE_HEIGHT - 1) * MAX_CONSOLE_WIDTH * sizeof(uint32_t));
+            cursor_y = rows - 1;
+            draw();
         }
     }
 }
