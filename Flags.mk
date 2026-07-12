@@ -7,7 +7,8 @@ COMMON_FLAGS := \
     -ffreestanding \
     -fno-exceptions \
     -fno-rtti \
-    -fno-stack-protector
+    -fno-stack-protector \
+    -mcmodel=kernel
 
 CFLAGS := \
     $(COMMON_WARNINGS) \
