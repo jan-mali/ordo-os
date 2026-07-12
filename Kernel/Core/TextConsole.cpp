@@ -33,6 +33,12 @@ void TextConsole::putc(char c) {
         return;
     }
 
+    if (c == '\t') {
+        for(int i = 0; i < 4; i++)
+            putc(' ');
+        return;
+    }
+
     if (c == '\n') {
         cursor_x = 0;
         if (++cursor_y >= rows) {

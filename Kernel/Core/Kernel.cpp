@@ -120,9 +120,54 @@ extern "C" void kmain() {
 
     Logger::log_info("Booting Ordo OS v0.0.1-dev\n");
 
-    if (auto response = bootloader_info_request.response) {
+    if (auto* response = bootloader_info_request.response) {
         Logger::log_info("Bootloader information: %s, version %s.\n", response->name, response->version);
     }
+
+    if (!memmap_request.response) {
+        Logger::log_critical("No memory map received, halting.\n");
+        halt();
+    }
+
+    static const char* memmap_entry_types[] = {
+        "USABLE",
+        "RESERVED",
+        "ACPI_RECLAIMABLE",
+        "ACPI_NVS",
+        "BAD_MEMORY",
+        "BOOTLOADER_RECLAIMABLE",
+        "EXECUTABLE_AND_MODULES",
+        "FRAMEBUFFER",
+        "RESERVED_MAPPED"
+    };
+
+    uint64_t immediately_usable_memory = 0;
+    uint64_t largest_cont_at = 0;
+    uint64_t largest_cont_size = 0;
+
+    limine_memmap_response* memmap_response = memmap_request.response;
+    Logger::log_info("Usable memory map:\n");
+    for (size_t i = 0; i < memmap_response->entry_count; i++) {
+        limine_memmap_entry* entry = memmap_response->entries[i];
+        if (entry->type != LIMINE_MEMMAP_USABLE
+            && entry->type != LIMINE_MEMMAP_ACPI_RECLAIMABLE
+            && entry->type != LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
+            continue;
+        }
+        Logger::log_info("\tbase=%X, length=%X, type=%d", entry->base, entry->length, entry->type);
+        Logger::kprintf("\t %d KiB %s\n", entry->length / 1024, memmap_entry_types[entry->type]);
+
+        if (entry->type == LIMINE_MEMMAP_USABLE) {
+            immediately_usable_memory += entry->length;
+            if (entry->length > largest_cont_size) {
+                largest_cont_at = entry->base;
+                largest_cont_size = entry->length;
+            }
+        }
+    }
+
+    Logger::log_info("Immediately usable memory: %d KiB\n", immediately_usable_memory / 1024);
+    Logger::log_info("Largest continous block is %d KiB at 0x%X\n", largest_cont_size / 1024, largest_cont_at);
 
     // We're done, just hang...
     halt();
