@@ -1,3 +1,4 @@
+#include "Logger/kstdio.hpp"
 #include <cstdint>
 #include <cstddef>
 #include <limine.h>
@@ -111,6 +112,8 @@ extern "C" void kmain() {
 
     serial.write("Basic framebuffer terminal initialized.\n");
     text_console.write("Basic framebuffer terminal initialized.\n");
+
+    Logger::kprintf("Basic printing and formatting is now available. %s\n", ":^)");
 
     // We're done, just hang...
     halt();
