@@ -5,3 +5,4 @@ Build/
 *.d
 *.img
 *.fd
+.clangd
