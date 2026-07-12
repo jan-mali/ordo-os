@@ -1,3 +1,4 @@
+#include "Logger/Logger.hpp"
 #include "Logger/kstdio.hpp"
 #include <cstdint>
 #include <cstddef>
@@ -79,7 +80,6 @@ extern "C" void kmain() {
 
     // Get the serial working as soon as possible to have any debugging capabilities
     serial.init();
-    serial.write("Serial output initialized.\n");
 
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
@@ -110,10 +110,19 @@ extern "C" void kmain() {
 
     text_console.init(framebuffer->pitch, framebuffer->height, fb_ptr);
 
-    serial.write("Basic framebuffer terminal initialized.\n");
-    text_console.write("Basic framebuffer terminal initialized.\n");
+    Logger::kprintf("\n");
+    Logger::kprintf("   ___          _          ___  ____  \n");
+    Logger::kprintf("  / _ \\ _ __ __| | ___    / _ \\/ ___| \n");
+    Logger::kprintf(" | | | | '__/ _` |/ _ \\  | | | \\___ \\ \n");
+    Logger::kprintf(" | |_| | | | (_| | (_) | | |_| |___) |\n");
+    Logger::kprintf("  \\___/|_|  \\__,_|\\___/   \\___/|____/ \n");
+    Logger::kprintf("\n\n");
 
-    Logger::kprintf("Basic printing and formatting is now available. %s\n", ":^)");
+    Logger::log_info("Booting Ordo OS v0.0.1-dev\n");
+
+    if (auto response = bootloader_info_request.response) {
+        Logger::log_info("Bootloader information: %s, version %s.\n", response->name, response->version);
+    }
 
     // We're done, just hang...
     halt();
