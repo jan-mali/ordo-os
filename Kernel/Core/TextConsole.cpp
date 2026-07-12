@@ -46,6 +46,8 @@ void TextConsole::putc(char c) {
     foreground[cursor_y * MAX_CONSOLE_WIDTH + cursor_x] = current_fg_color;
     background[cursor_y * MAX_CONSOLE_WIDTH + cursor_x] = current_bg_color;
 
+    draw(cursor_y, cursor_x);
+
     if (++cursor_x >= columns) {
         cursor_x = 0;
         if (++cursor_y >= rows) {
@@ -53,8 +55,6 @@ void TextConsole::putc(char c) {
             cursor_y = 0;
         }
     }
-
-    draw();
 }
 
 void TextConsole::write(const char* str) {
@@ -79,24 +79,29 @@ void TextConsole::set_color(uint32_t fg, uint32_t bg) {
 void TextConsole::draw() {
     if (!initialized)
         return;
-
-    // We are assuming a 0x00RRGGBB format of the framebuffer
-
-    const PSF2Header* font = reinterpret_cast<const PSF2Header*>(default8x16_psfu);
     
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < columns; col++) {
-            // We are using an 8x16 font
-            char c = text[row * MAX_CONSOLE_WIDTH + col];
-            uint32_t fg = foreground[row * MAX_CONSOLE_WIDTH + col];
-            uint32_t bg = background[row * MAX_CONSOLE_WIDTH + col];
-            const uint8_t* glyph = default8x16_psfu + font->headersize + c * font->bytesperglyph;
-            for (int y = 0; y < 16; y++) {
-                for (int x = 0; x < 8; x++) {
-                    volatile uint32_t* pixel = &framebuffer_data[(row * 16 + y) * (pitch / 4) + (col * 8 + x)];
-                    *pixel = (glyph[y] & (0b10000000 >> x)) > 0 ? fg : bg;
-                }
-            }
+            draw(row, col);
+        }
+    }
+}
+
+void TextConsole::draw(int row, int column) {
+    if (!initialized)
+        return;
+
+    // We are assuming a 0x00RRGGBB format of the framebuffer
+    const PSF2Header* font = reinterpret_cast<const PSF2Header*>(default8x16_psfu);
+    
+    char c = text[row * MAX_CONSOLE_WIDTH + column];
+    uint32_t fg = foreground[row * MAX_CONSOLE_WIDTH + column];
+    uint32_t bg = background[row * MAX_CONSOLE_WIDTH + column];
+    const uint8_t* glyph = default8x16_psfu + font->headersize + c * font->bytesperglyph;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 8; x++) {
+            volatile uint32_t* pixel = &framebuffer_data[(row * 16 + y) * (pitch / 4) + (column * 8 + x)];
+            *pixel = (glyph[y] & (0b10000000 >> x)) > 0 ? fg : bg;
         }
     }
 }

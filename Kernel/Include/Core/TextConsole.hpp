@@ -25,6 +25,7 @@ public:
     void set_color(uint32_t fg, uint32_t bg);
 
     void draw();
+    void draw(int row, int column);
 
 private:
     char text[MAX_CONSOLE_WIDTH * MAX_CONSOLE_HEIGHT];
