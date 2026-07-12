@@ -13,7 +13,7 @@ all: $(KERNEL)
 	@echo "Kernel built successfully"
 
 clean:
-	rm -rf Build
+	rm -rf Build disk.img
 
 rebuild: clean
 	$(MAKE)

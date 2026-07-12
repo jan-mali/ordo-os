@@ -1,7 +1,7 @@
 Build/
-ISO/
 .cache/
 .vscode/
 *.o
 *.d
 *.img
+*.fd
