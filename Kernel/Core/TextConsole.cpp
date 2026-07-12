@@ -1,4 +1,4 @@
-#include <TextConsole.hpp>
+#include <Core/TextConsole.hpp>
 #include <default8x16_psfu.hpp>
 
 TextConsole text_console;

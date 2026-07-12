@@ -2,7 +2,7 @@
 #include <cstddef>
 #include <limine.h>
 #include <Serial.hpp>
-#include <TextConsole.hpp>
+#include <Core/TextConsole.hpp>
 
 // Set the base revision to 6, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
