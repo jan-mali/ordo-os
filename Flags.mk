@@ -24,6 +24,9 @@ CXXFLAGS := \
     -MMD -MP \
     $(INCLUDE_FLAGS)
 
+ASFLAGS := \
+    -f elf64
+
 CFLAGS   += -O2 -g
 CXXFLAGS += -O2 -g
 

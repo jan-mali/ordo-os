@@ -5,6 +5,8 @@
 #include <limine.h>
 #include <Arch/x86_64/Serial.hpp>
 #include <Core/TextConsole.hpp>
+#include <Arch/x86_64/Interrupts.hpp>
+#include <Arch/x86_64/GDT.hpp>
 
 // Set the base revision to 6, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -73,6 +75,9 @@ extern "C" constructor __init_array[];
 extern "C" constructor __init_array_end[];
 
 extern "C" void kmain() {
+    // This is guaranteed by Limine but we ensure it here for sanity reasons
+    Interrupts::disable();
+
     // Call global constructors.
     for (constructor* ctor = __init_array; ctor != __init_array_end; ctor++) {
         (*ctor)();
@@ -124,68 +129,73 @@ extern "C" void kmain() {
         Logger::log_info("Bootloader information: %s, version %s.\n", response->name, response->version);
     }
 
-    if (!memmap_request.response) {
-        Logger::log_critical("No memory map received, halting.\n");
-        halt();
-    }
-
-    static const char* memmap_entry_types[] = {
-        "USABLE",
-        "RESERVED",
-        "ACPI_RECLAIMABLE",
-        "ACPI_NVS",
-        "BAD_MEMORY",
-        "BOOTLOADER_RECLAIMABLE",
-        "EXECUTABLE_AND_MODULES",
-        "FRAMEBUFFER",
-        "RESERVED_MAPPED"
-    };
-
-    uint64_t immediately_usable_memory = 0;
-
-    uint64_t largest_cont_at = 0;
-    uint64_t largest_cont_size = 0;
-
-    uint64_t as_size = 0;
-
-    limine_memmap_response* memmap_response = memmap_request.response;
-    Logger::log_info("Usable memory map:\n");
-    for (size_t i = 0; i < memmap_response->entry_count; i++) {
-        limine_memmap_entry* entry = memmap_response->entries[i];
-
-        if (entry->base + entry->length > as_size) {
-            as_size = entry->base + entry->length;
+    // TODO: Move this to a dedicated PMM
+    {
+        if (!memmap_request.response) {
+            Logger::log_critical("No memory map received, halting.\n");
+            halt();
         }
 
-        if (entry->type != LIMINE_MEMMAP_USABLE
-            && entry->type != LIMINE_MEMMAP_ACPI_RECLAIMABLE
-            && entry->type != LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
-            continue;
-        }
-        Logger::log_info("\tbase=%X, length=%X, type=%d", entry->base, entry->length, entry->type);
-        Logger::kprintf("\t %d KiB %s\n", entry->length / 1024, memmap_entry_types[entry->type]);
+        static const char* memmap_entry_types[] = {
+            "USABLE",
+            "RESERVED",
+            "ACPI_RECLAIMABLE",
+            "ACPI_NVS",
+            "BAD_MEMORY",
+            "BOOTLOADER_RECLAIMABLE",
+            "EXECUTABLE_AND_MODULES",
+            "FRAMEBUFFER",
+            "RESERVED_MAPPED"
+        };
 
-        if (entry->type == LIMINE_MEMMAP_USABLE) {
-            immediately_usable_memory += entry->length;
-            if (entry->length > largest_cont_size) {
-                largest_cont_at = entry->base;
-                largest_cont_size = entry->length;
+        uint64_t immediately_usable_memory = 0;
+
+        uint64_t largest_cont_at = 0;
+        uint64_t largest_cont_size = 0;
+
+        uint64_t as_size = 0;
+
+        limine_memmap_response* memmap_response = memmap_request.response;
+        Logger::log_info("Usable memory map:\n");
+        for (size_t i = 0; i < memmap_response->entry_count; i++) {
+            limine_memmap_entry* entry = memmap_response->entries[i];
+
+            if (entry->base + entry->length > as_size) {
+                as_size = entry->base + entry->length;
+            }
+
+            if (entry->type != LIMINE_MEMMAP_USABLE
+                && entry->type != LIMINE_MEMMAP_ACPI_RECLAIMABLE
+                && entry->type != LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
+                continue;
+            }
+            Logger::log_info("\tbase=%X, length=%X, type=%d", entry->base, entry->length, entry->type);
+            Logger::kprintf("\t %d KiB %s\n", entry->length / 1024, memmap_entry_types[entry->type]);
+
+            if (entry->type == LIMINE_MEMMAP_USABLE) {
+                immediately_usable_memory += entry->length;
+                if (entry->length > largest_cont_size) {
+                    largest_cont_at = entry->base;
+                    largest_cont_size = entry->length;
+                }
             }
         }
+
+        Logger::log_info("Immediately usable memory: %d KiB\n", immediately_usable_memory / 1024);
+        Logger::log_info("Largest continous block is %d KiB at 0x%X\n", largest_cont_size / 1024, largest_cont_at);
+
+        Logger::log_info("The Address Space is %d KiB large, this is equivalent to:\n", as_size / 1024);
+
+        uint64_t as_pages = (as_size + 4095) / 4096;
+        uint64_t pmm_bitmap_bytes = as_pages / 8;
+        uint64_t pmm_bitmap_pages = (pmm_bitmap_bytes + 4095) / 4096;
+
+        Logger::log_info("\t- %d pages\n", as_pages);
+        Logger::log_info("\t- %d KiB PMM bitmap\n", pmm_bitmap_bytes / 1024);
+        Logger::log_info("\t- %d PMM bitmap pages\n", pmm_bitmap_pages);
     }
 
-    Logger::log_info("Immediately usable memory: %d KiB\n", immediately_usable_memory / 1024);
-    Logger::log_info("Largest continous block is %d KiB at 0x%X\n", largest_cont_size / 1024, largest_cont_at);
-
-    Logger::log_info("The Address Space is %d KiB large, this is equivalent to:\n", as_size / 1024);
-
-    uint64_t as_pages = (as_size + 4095) / 4096;
-    uint64_t pmm_bitmap_bytes = as_pages / 8;
-    uint64_t pmm_bitmap_pages = (pmm_bitmap_bytes + 4095) / 4096;
-
-    Logger::log_info("\t- %d pages\n", as_pages);
-    Logger::log_info("\t- %d KiB PMM bitmap\n", pmm_bitmap_bytes / 1024);
-    Logger::log_info("\t- %d PMM bitmap pages\n", pmm_bitmap_pages);
+    GDT::init();
 
     // We're done, just hang...
     halt();

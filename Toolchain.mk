@@ -5,3 +5,4 @@ CXX     := $(TARGET)-g++
 LD      := $(TARGET)-ld
 AR      := $(TARGET)-ar
 OBJCOPY := $(TARGET)-objcopy
+AS      := nasm
