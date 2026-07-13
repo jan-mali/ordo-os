@@ -8,18 +8,24 @@ namespace Logger {
 void vlog(LogLevel level, const char* fmt, va_list args) {
     // TODO: Extend this to show the current task
     if (false) {
-        serial.write("\x1b[93m");
-        text_console.set_color(0xfff176, 0);
+        // TODO: Extend this to show the current permission level
+        if (false) {
+            serial.write("\x1b[93m");
+            text_console.set_color(0xfff176, 0);
+        } else {
+            serial.write("\x1b[96m");
+            text_console.set_color(0x00e5ff, 0);
+        }
         kprintf("some-process(some-pid)");
-        serial.write("\x1b[0m");
-        text_console.set_color(0xffffff, 0);
     } else {
         serial.write("\x1b[96m");
         text_console.set_color(0x00e5ff, 0);
         kprintf("Kernel");
-        serial.write("\x1b[0m");
-        text_console.set_color(0xffffff, 0);
     }
+
+    // Reset the color settings
+    serial.write("\x1b[0m");
+    text_console.set_color(0xffffff, 0);
 
     kprintf(": ");
     switch (level) {
