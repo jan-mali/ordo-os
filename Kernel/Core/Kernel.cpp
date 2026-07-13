@@ -85,6 +85,7 @@ extern "C" void kmain() {
 
     // Get the serial working as soon as possible to have any debugging capabilities
     serial.init();
+    serial.write("Hello serial!\n");
 
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
