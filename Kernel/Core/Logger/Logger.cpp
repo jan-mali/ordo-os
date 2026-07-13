@@ -2,11 +2,10 @@
 #include <Arch/x86_64/Serial.hpp>
 #include <Logger/kstdio.hpp>
 #include <Logger/Logger.hpp>
-#include <stdarg.h>
 
 namespace Logger {
 
-static void vlog(LogLevel level, const char* fmt, va_list args) {
+void vlog(LogLevel level, const char* fmt, va_list args) {
     // TODO: Extend this to show the current task
     if (false) {
         serial.write("\x1b[93m");

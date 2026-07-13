@@ -1,3 +1,4 @@
+#include "Core/Panic.hpp"
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 #include <cstdint>
@@ -90,15 +91,13 @@ extern "C" void kmain() {
 
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
-        serial.write("Bootloader doesn't support the requested Limine protocol revision, halting.\n");
-        halt();
+        panic("Bootloader doesn't support the requested Limine protocol revision.\n");
     }
 
     // Ensure we got a framebuffer.
     if (framebuffer_request.response == nullptr
      || framebuffer_request.response->framebuffer_count < 1) {
-        serial.write("No framebuffer received, halting.\n");
-        halt();
+        panic("No framebuffer received.\n");
     }
 
     // Fetch the first framebuffer.
@@ -131,11 +130,15 @@ extern "C" void kmain() {
         Logger::log_info("Bootloader information: %s, version %s.\n", response->name, response->version);
     }
 
+    GDT::init();
+
+    Interrupts::init();
+    Interrupts::enable();
+
     // TODO: Move this to a dedicated PMM
     {
         if (!memmap_request.response) {
-            Logger::log_critical("No memory map received, halting.\n");
-            halt();
+            panic("No memory map received.\n");
         }
 
         static const char* memmap_entry_types[] = {
@@ -196,11 +199,6 @@ extern "C" void kmain() {
         Logger::log_info("\t- %d KiB PMM bitmap\n", pmm_bitmap_bytes / 1024);
         Logger::log_info("\t- %d PMM bitmap pages\n", pmm_bitmap_pages);
     }
-
-    GDT::init();
-
-    Interrupts::init();
-    Interrupts::enable();
 
     // We're done, just hang...
     halt();
