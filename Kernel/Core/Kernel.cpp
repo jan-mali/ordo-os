@@ -1,3 +1,4 @@
+#include "Core/MM/PMM.hpp"
 #include "Core/Panic.hpp"
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -133,72 +134,11 @@ extern "C" void kmain() {
     GDT::init();
 
     Interrupts::init();
+
+    pmm.init(memmap_request.response, hhdm_request.response);
+
+    // Enable interrupts after everything was set up
     Interrupts::enable();
-
-    // TODO: Move this to a dedicated PMM
-    {
-        if (!memmap_request.response) {
-            panic("No memory map received.\n");
-        }
-
-        static const char* memmap_entry_types[] = {
-            "USABLE",
-            "RESERVED",
-            "ACPI_RECLAIMABLE",
-            "ACPI_NVS",
-            "BAD_MEMORY",
-            "BOOTLOADER_RECLAIMABLE",
-            "EXECUTABLE_AND_MODULES",
-            "FRAMEBUFFER",
-            "RESERVED_MAPPED"
-        };
-
-        uint64_t immediately_usable_memory = 0;
-
-        uint64_t largest_cont_at = 0;
-        uint64_t largest_cont_size = 0;
-
-        uint64_t as_size = 0;
-
-        limine_memmap_response* memmap_response = memmap_request.response;
-        Logger::log_info("Usable memory map:\n");
-        for (size_t i = 0; i < memmap_response->entry_count; i++) {
-            limine_memmap_entry* entry = memmap_response->entries[i];
-
-            if (entry->base + entry->length > as_size) {
-                as_size = entry->base + entry->length;
-            }
-
-            if (entry->type != LIMINE_MEMMAP_USABLE
-                && entry->type != LIMINE_MEMMAP_ACPI_RECLAIMABLE
-                && entry->type != LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
-                continue;
-            }
-            Logger::log_info("\tbase=%X, length=%X, type=%d", entry->base, entry->length, entry->type);
-            Logger::kprintf("\t %d KiB %s\n", entry->length / 1024, memmap_entry_types[entry->type]);
-
-            if (entry->type == LIMINE_MEMMAP_USABLE) {
-                immediately_usable_memory += entry->length;
-                if (entry->length > largest_cont_size) {
-                    largest_cont_at = entry->base;
-                    largest_cont_size = entry->length;
-                }
-            }
-        }
-
-        Logger::log_info("Immediately usable memory: %d KiB\n", immediately_usable_memory / 1024);
-        Logger::log_info("Largest continous block is %d KiB at 0x%X\n", largest_cont_size / 1024, largest_cont_at);
-
-        Logger::log_info("The Address Space is %d KiB large, this is equivalent to:\n", as_size / 1024);
-
-        uint64_t as_pages = (as_size + 4095) / 4096;
-        uint64_t pmm_bitmap_bytes = as_pages / 8;
-        uint64_t pmm_bitmap_pages = (pmm_bitmap_bytes + 4095) / 4096;
-
-        Logger::log_info("\t- %d pages\n", as_pages);
-        Logger::log_info("\t- %d KiB PMM bitmap\n", pmm_bitmap_bytes / 1024);
-        Logger::log_info("\t- %d PMM bitmap pages\n", pmm_bitmap_pages);
-    }
 
     // We're done, just hang...
     halt();

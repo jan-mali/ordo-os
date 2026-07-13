@@ -8,6 +8,19 @@ COMMON_FLAGS := \
     -fno-exceptions \
     -fno-rtti \
     -fno-stack-protector \
+    -march=x86-64 \
+    -fno-builtin \
+    -mno-sse \
+    -mno-sse2 \
+    -mno-sse3 \
+    -mno-ssse3 \
+    -mno-sse4 \
+    -mno-sse4.1 \
+    -mno-sse4.2 \
+    -mno-avx \
+    -mno-red-zone \
+    -fno-tree-vectorize \
+    -fno-tree-slp-vectorize \
     -mcmodel=kernel
 
 CFLAGS := \
