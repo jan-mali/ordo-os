@@ -1,9 +1,9 @@
-#include "Logger/Logger.hpp"
-#include "Logger/kstdio.hpp"
+#include <Logger/Logger.hpp>
+#include <Logger/kstdio.hpp>
 #include <cstdint>
 #include <cstddef>
 #include <limine.h>
-#include <Serial.hpp>
+#include <Arch/x86_64/Serial.hpp>
 #include <Core/TextConsole.hpp>
 
 // Set the base revision to 6, this is recommended as this is the latest

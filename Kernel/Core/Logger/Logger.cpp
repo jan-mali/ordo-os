@@ -1,5 +1,5 @@
-#include "Core/TextConsole.hpp"
-#include "Serial.hpp"
+#include <Core/TextConsole.hpp>
+#include <Arch/x86_64/Serial.hpp>
 #include <Logger/kstdio.hpp>
 #include <Logger/Logger.hpp>
 #include <stdarg.h>

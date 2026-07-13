@@ -1,6 +1,6 @@
 #include <Logger/kstdio.hpp>
 #include <cstdint>
-#include <Serial.hpp>
+#include <Arch/x86_64/Serial.hpp>
 #include <Core/TextConsole.hpp>
 
 namespace Logger {

@@ -1,5 +1,5 @@
-#include <Serial.hpp>
-#include <IO.hpp>
+#include <Arch/x86_64/Serial.hpp>
+#include <Arch/x86_64/IO.hpp>
 
 #define SERIAL_PORT 0x03F8
 
