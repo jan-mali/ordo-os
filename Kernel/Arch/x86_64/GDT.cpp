@@ -91,7 +91,8 @@ void init() {
 
     entries[6] = { // TSS High
         .tss_high = {
-            .base32 = tss_base32
+            .base32 = tss_base32,
+            .reserved = 0
         }
     };
 

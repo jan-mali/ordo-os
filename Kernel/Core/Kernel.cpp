@@ -7,6 +7,7 @@
 #include <Core/TextConsole.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/GDT.hpp>
+#include <Arch/x86_64/IO.hpp>
 
 // Set the base revision to 6, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -197,6 +198,9 @@ extern "C" void kmain() {
     }
 
     GDT::init();
+
+    Interrupts::init();
+    Interrupts::enable();
 
     // We're done, just hang...
     halt();

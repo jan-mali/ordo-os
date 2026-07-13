@@ -2,12 +2,8 @@
 
 namespace Interrupts {
 
-static void enable() {
-    asm volatile ("sti");
-}
-
-static void disable() {
-    asm volatile ("cli");
-}
+void enable();
+void disable();
+void init();
 
 }
