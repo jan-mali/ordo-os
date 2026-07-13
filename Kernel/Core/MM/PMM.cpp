@@ -102,6 +102,9 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 
     bitmap_set_range(largest_cont_at, pmm_bitmap_bytes, true);
 
+    // Reserve page 0 for clean page faults just in case it was usable before
+    bitmap_set(0, true);
+
     initialized = true;
 
     Logger::log_info("PMM is intialized.\n");
