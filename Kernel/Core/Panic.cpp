@@ -1,22 +1,22 @@
 #include "Arch/x86_64/Interrupts.hpp"
-#include <Logger/Logger.hpp>
 #include <Core/Panic.hpp>
+#include <Logger/Logger.hpp>
 #include <cstdarg>
 
 void panic(const char* fmt, ...) {
-    Interrupts::disable();
+	Interrupts::disable();
 
-    Logger::log_critical("KERNEL PANIC! Halting...\n");
+	Logger::log_critical("KERNEL PANIC! Halting...\n");
 
-    va_list args;
-    va_start(args, fmt);
+	va_list args;
+	va_start(args, fmt);
 
-    Logger::vlog(Logger::LogLevel::Critical, fmt, args);
-    
-    va_end(args);
+	Logger::vlog(Logger::LogLevel::Critical, fmt, args);
 
-    for (;;) {
-        Interrupts::disable();
-        asm volatile ("hlt");
-    }
+	va_end(args);
+
+	for (;;) {
+		Interrupts::disable();
+		asm volatile("hlt");
+	}
 }

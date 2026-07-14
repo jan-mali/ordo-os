@@ -4,11 +4,11 @@
 namespace Logger {
 
 enum class LogLevel {
-    Debug,
-    Info,
-    Warning,
-    Error,
-    Critical
+	Debug,
+	Info,
+	Warning,
+	Error,
+	Critical
 };
 
 void vlog(LogLevel level, const char* fmt, va_list args);

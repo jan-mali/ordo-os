@@ -2,13 +2,12 @@
 
 class Serial {
 public:
-    void init();
-    void putc(char c);
-    void write(const char* str);
+	void init();
+	void putc(char c);
+	void write(const char* str);
 
 private:
-    bool initialized = false;
-
+	bool initialized = false;
 };
 
 extern Serial serial;
