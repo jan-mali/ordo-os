@@ -18,6 +18,7 @@ void handle_page_fault(Registers* regs) {
 	uint64_t cr2 = read_cr2();
 	uint64_t cr3 = read_cr3();
 
+	Logger::reset_indent();
 	Logger::log_critical("Exception %d - Page Fault\n", regs->int_no);
 
 	uint64_t err = regs->err_code;

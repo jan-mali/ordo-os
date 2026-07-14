@@ -1,6 +1,8 @@
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/PageFault.hpp>
 #include <Arch/x86_64/Registers.hpp>
+#include <Core/ACPI/Interrupts.hpp>
+#include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 
@@ -49,6 +51,7 @@ extern "C" void isr_handler(Registers* registers) {
 		return handle_page_fault(registers);
 
 	if (registers->int_no < 32) {
+		Logger::reset_indent();
 		Logger::log_critical("Exception %d", registers->int_no);
 
 		if (registers->int_no < sizeof(exception_names)) {
@@ -64,8 +67,20 @@ extern "C" void isr_handler(Registers* registers) {
 		}
 	}
 
-	Logger::log_debug("Received an interrupt :^)\n");
-	Logger::log_debug("\tInterrupt no. %d\n", registers->int_no);
+	if (registers->int_no == 33) {
+		// PS/2 Keyboard
+		uint8_t scancode = IO::inb(0x60);
+
+		if (scancode < sizeof(scancode_to_ascii)) {
+			text_console.putc(scancode_to_ascii[scancode]);
+		}
+
+		ACPI::Interrupts::interrupt_manager->eoi();
+		return;
+	}
 
 	// TODO: Handle other interrupts
+
+	Logger::log_debug("Received an interrupt :^)\n");
+	Logger::log_debug("\tInterrupt no. %d\n", registers->int_no);
 }

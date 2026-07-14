@@ -5,7 +5,6 @@
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
-#include <cstddef>
 #include <limine.h>
 
 KernelVMM kernel_vmm;
@@ -51,7 +50,7 @@ void* KernelVMM::allocate_pages(uint64_t count) {
 
 				// Allocate physical pages for the virtual pages
 				uint64_t phys_page = reinterpret_cast<uint64_t>(pmm.alloc(1));
-				Paging::kernel_address_space.map(start * 4096 + p * 4096 + KERNEL_HEAP_START, phys_page, Paging::WRITABLE);
+				Paging::kernel_address_space.map(start * 4096 + p * 4096 + KERNEL_HEAP_START, phys_page, static_cast<uint64_t>(Paging::PageFlags::Writable));
 			}
 
 			// Return the virtual address of the allocated pages

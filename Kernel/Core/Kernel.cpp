@@ -2,6 +2,7 @@
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Serial.hpp>
+#include <Core/ACPI/ACPI.hpp>
 #include <Core/MM/KernelHeap.hpp>
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
@@ -42,6 +43,12 @@ __attribute__((used, section(".limine_requests"))) volatile limine_hhdm_request 
 
 __attribute__((used, section(".limine_requests"))) volatile limine_memmap_request memmap_request = {
 	.id = LIMINE_MEMMAP_REQUEST_ID,
+	.revision = 0,
+	.response = nullptr
+};
+
+__attribute__((used, section(".limine_requests"))) volatile limine_rsdp_request rsdp_request = {
+	.id = LIMINE_RSDP_REQUEST_ID,
 	.revision = 0,
 	.response = nullptr
 };
@@ -138,6 +145,8 @@ extern "C" void kmain() {
 	kernel_vmm.init();
 
 	kernel_heap.init();
+
+	ACPI::init(rsdp_request.response);
 
 	// Enable interrupts after everything was set up
 	Interrupts::enable();

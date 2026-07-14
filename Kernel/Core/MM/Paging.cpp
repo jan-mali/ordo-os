@@ -10,7 +10,7 @@ AddressSpace kernel_address_space;
 AddressSpace* current_address_space;
 
 static uint64_t* next_table(uint64_t* entry, bool create) {
-	if (*entry & PRESENT) {
+	if (*entry & static_cast<uint64_t>(PageFlags::Present)) {
 		return reinterpret_cast<uint64_t*>(
 			pmm.translate_to_hhdm(*entry & ~0xFFFULL)
 		);
@@ -27,7 +27,7 @@ static uint64_t* next_table(uint64_t* entry, bool create) {
 
 	memset(reinterpret_cast<void*>(pmm.translate_to_hhdm(page)), 0, PAGE_SIZE);
 
-	*entry = page | PRESENT | WRITABLE | USER;
+	*entry = page | static_cast<uint64_t>(PageFlags::Present) | static_cast<uint64_t>(PageFlags::Writable) | static_cast<uint64_t>(PageFlags::User);
 
 	return reinterpret_cast<uint64_t*>(
 		pmm.translate_to_hhdm(page)
@@ -66,7 +66,7 @@ bool AddressSpace::map(uint64_t virt, uint64_t phys, uint64_t flags) {
 	uint64_t* pd = next_table(&pdpt[pdpt_index], true);
 	uint64_t* pt = next_table(&pd[pd_index], true);
 
-	pt[pt_index] = phys | flags | PRESENT;
+	pt[pt_index] = phys | flags | static_cast<uint64_t>(PageFlags::Present);
 
 	asm volatile("invlpg (%0)" ::"r"(virt) : "memory");
 
@@ -98,6 +98,10 @@ void AddressSpace::unmap(uint64_t virt) {
 	asm volatile("invlpg (%0)" ::"r"(virt) : "memory");
 }
 
+bool AddressSpace::map_mmio_to_hhdm(uint64_t phys) {
+	return map(pmm.translate_to_hhdm(phys), phys, static_cast<uint64_t>(PageFlags::Writable) | static_cast<uint64_t>(PageFlags::PCD) | static_cast<uint64_t>(PageFlags::PWT) | static_cast<uint64_t>(PageFlags::NX));
+}
+
 bool AddressSpace::is_mapped(uint64_t virt) const {
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
@@ -118,7 +122,7 @@ bool AddressSpace::is_mapped(uint64_t virt) const {
 	if (!pt)
 		return false;
 
-	return pt[pt_index] & PRESENT;
+	return pt[pt_index] & static_cast<uint64_t>(PageFlags::Present);
 }
 
 uint64_t AddressSpace::flags(uint64_t virt) const {
@@ -152,28 +156,28 @@ uint64_t AddressSpace::translate(uint64_t virt) const {
 	uint64_t i2 = (virt >> 21) & 0x1FF;
 	uint64_t i1 = (virt >> 12) & 0x1FF;
 
-	if (!(pml4[i4] & PRESENT))
+	if (!(pml4[i4] & static_cast<uint64_t>(PageFlags::Present)))
 		return 0;
 
 	auto* pdpt = reinterpret_cast<uint64_t*>(
 		pmm.translate_to_hhdm(pml4[i4] & ~0xFFFULL)
 	);
 
-	if (!(pdpt[i3] & PRESENT))
+	if (!(pdpt[i3] & static_cast<uint64_t>(PageFlags::Present)))
 		return 0;
 
 	auto* pd = reinterpret_cast<uint64_t*>(
 		pmm.translate_to_hhdm(pdpt[i3] & ~0xFFFULL)
 	);
 
-	if (!(pd[i2] & PRESENT))
+	if (!(pd[i2] & static_cast<uint64_t>(PageFlags::Present)))
 		return 0;
 
 	auto* pt = reinterpret_cast<uint64_t*>(
 		pmm.translate_to_hhdm(pd[i2] & ~0xFFFULL)
 	);
 
-	if (!(pt[i1] & PRESENT))
+	if (!(pt[i1] & static_cast<uint64_t>(PageFlags::Present)))
 		return 0;
 
 	return (pt[i1] & ~0xFFFULL) | (virt & 0xFFF);
@@ -208,7 +212,7 @@ AddressSpace AddressSpace::create_kernel_address_space() {
 		new_pml4[i] = limine_pml4[i];
 
 		// If the entry doesn't exist, create a new PDPT for the kernel space
-		if (!(new_pml4[i] & PRESENT)) {
+		if (!(new_pml4[i] & static_cast<uint64_t>(PageFlags::Present))) {
 			next_table(&new_pml4[i], true);
 		}
 	}

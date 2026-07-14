@@ -7,6 +7,8 @@
 void panic(const char* fmt, ...) {
 	Interrupts::disable();
 
+	Logger::reset_indent();
+
 	Logger::log_critical("KERNEL PANIC! Halting...\n");
 
 	va_list args;

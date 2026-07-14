@@ -4,9 +4,17 @@
 
 namespace Paging {
 
-constexpr uint64_t PRESENT = 1 << 0;
-constexpr uint64_t WRITABLE = 1 << 1;
-constexpr uint64_t USER = 1 << 2;
+enum class PageFlags : uint64_t {
+	Present = 1ull << 0,
+	Writable = 1ull << 1,
+	User = 1ull << 2,
+	PWT = 1ull << 3,
+	PCD = 1ull << 4,
+	PAT = 1ull << 7,
+	Global = 1ull << 8,
+	NX = 1ull << 63,
+};
+
 constexpr uint64_t PAGE_SIZE = 4096;
 
 class AddressSpace {
@@ -26,6 +34,8 @@ public:
 	void activate();
 	bool map(uint64_t virt, uint64_t phys, uint64_t flags);
 	void unmap(uint64_t virt);
+
+	bool map_mmio_to_hhdm(uint64_t phys);
 
 	bool is_mapped(uint64_t virt) const;
 	uint64_t flags(uint64_t virt) const;

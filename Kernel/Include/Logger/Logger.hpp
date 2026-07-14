@@ -18,4 +18,8 @@ void log_warning(const char* fmt, ...);
 void log_error(const char* fmt, ...);
 void log_critical(const char* fmt, ...);
 
+void reset_indent();
+void increase_indent();
+void decrease_indent();
+
 }

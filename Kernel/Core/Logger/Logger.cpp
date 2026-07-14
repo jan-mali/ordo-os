@@ -5,6 +5,8 @@
 
 namespace Logger {
 
+static uint64_t indent = 0;
+
 void vlog(LogLevel level, const char* fmt, va_list args) {
 	// TODO: Extend this to show the current task
 	if (false) {
@@ -28,6 +30,7 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 	text_console.set_color(0xffffff, 0);
 
 	kprintf(": ");
+
 	switch (level) {
 	case LogLevel::Debug:
 		serial.write("\x1b[35m");
@@ -75,6 +78,10 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 
 	kprintf(" ");
 
+	for (uint64_t i = 0; i < indent; i++) {
+		kprintf("\t");
+	}
+
 	kvprintf(fmt, args);
 }
 
@@ -121,6 +128,18 @@ void log_critical(const char* fmt, ...) {
 	vlog(LogLevel::Critical, fmt, args);
 
 	va_end(args);
+}
+
+void reset_indent() {
+	indent = 0;
+}
+
+void increase_indent() {
+	indent++;
+}
+
+void decrease_indent() {
+	indent--;
 }
 
 }
