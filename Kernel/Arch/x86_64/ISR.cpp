@@ -8,6 +8,8 @@
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 
+static bool shift = false;
+
 static const char scancode_to_ascii[] = {
 	0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
 	'\t',
@@ -16,6 +18,20 @@ static const char scancode_to_ascii[] = {
 	'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
 	0,
 	'\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',
+	0,
+	'*',
+	0,
+	' '
+};
+
+static const char scancode_to_ascii_shift[] = {
+	0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+	'\t',
+	'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
+	0,
+	'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~',
+	0,
+	'|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',
 	0,
 	'*',
 	0,
@@ -73,9 +89,12 @@ extern "C" void isr_handler(Registers* registers) {
 		// PS/2 Keyboard
 		uint8_t scancode = IO::inb(0x60);
 
-		if (scancode < sizeof(scancode_to_ascii)) {
+		if ((scancode & ~0x80) == 42 || (scancode & ~0x80) == 54) {
+			// Shift Key
+			shift = !(scancode & 0x80);
+		} else if (scancode < sizeof(scancode_to_ascii)) {
 			text_console.set_color(0x00FFD700, 0);
-			text_console.putc(scancode_to_ascii[scancode]);
+			text_console.putc((shift ? scancode_to_ascii_shift : scancode_to_ascii)[scancode]);
 			text_console.set_color(0xffffff, 0);
 		} else {
 			if (scancode == 59) { // F1
@@ -98,6 +117,7 @@ extern "C" void isr_handler(Registers* registers) {
 		}
 
 		ACPI::Interrupts::interrupt_manager->eoi();
+
 		return;
 	}
 
