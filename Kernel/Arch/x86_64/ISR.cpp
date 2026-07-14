@@ -2,6 +2,8 @@
 #include <Arch/x86_64/PageFault.hpp>
 #include <Arch/x86_64/Registers.hpp>
 #include <Core/ACPI/Interrupts.hpp>
+#include <Core/MM/KernelVMM.hpp>
+#include <Core/MM/PMM.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -72,7 +74,27 @@ extern "C" void isr_handler(Registers* registers) {
 		uint8_t scancode = IO::inb(0x60);
 
 		if (scancode < sizeof(scancode_to_ascii)) {
+			text_console.set_color(0x00FFD700, 0);
 			text_console.putc(scancode_to_ascii[scancode]);
+			text_console.set_color(0xffffff, 0);
+		} else {
+			if (scancode == 59) { // F1
+				Logger::kprintf("\n");
+				Logger::kprintf("   ___          _          ___  ____  \n");
+				Logger::kprintf("  / _ \\ _ __ __| | ___    / _ \\/ ___| \n");
+				Logger::kprintf(" | | | | '__/ _` |/ _ \\  | | | \\___ \\ \n");
+				Logger::kprintf(" | |_| | | | (_| | (_) | | |_| |___) |\n");
+				Logger::kprintf("  \\___/|_|  \\__,_|\\___/   \\___/|____/ \n");
+				Logger::kprintf("\n\t\tOrdo OS by Gameefan\n");
+				Logger::kprintf("\n\n");
+			}
+			if (scancode == 60) { // F2
+				Logger::log_debug("Memory statistics:\n");
+				Logger::log_debug("PMM:\t Total: %d pages\n", pmm.get_total_pages());
+				Logger::log_debug("\t\t Free: %d pages\n", pmm.get_free_pages());
+				Logger::log_debug("VMM:\t Total: %d pages\n", kernel_vmm.get_total_pages());
+				Logger::log_debug("\t\t Free: %d pages\n", kernel_vmm.get_free_pages());
+			}
 		}
 
 		ACPI::Interrupts::interrupt_manager->eoi();
