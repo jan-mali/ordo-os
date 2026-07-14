@@ -3,6 +3,7 @@
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Serial.hpp>
 #include <Core/MM/PMM.hpp>
+#include <Core/MM/Paging.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
@@ -129,6 +130,8 @@ extern "C" void kmain() {
 	Interrupts::init();
 
 	pmm.init(memmap_request.response, hhdm_request.response);
+
+	Paging::init();
 
 	// Enable interrupts after everything was set up
 	Interrupts::enable();

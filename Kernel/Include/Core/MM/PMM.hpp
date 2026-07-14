@@ -13,6 +13,10 @@ public:
 	uint64_t get_total_pages() const { return stats.pages_total; }
 	uint64_t get_free_pages() const { return stats.pages_free; }
 
+	uint64_t translate_to_hhdm(uint64_t phys) const {
+		return phys + hhdm_offset;
+	}
+
 private:
 	void bitmap_set(uint64_t page, bool used);
 	void bitmap_set_range(uint64_t base, uint64_t length, bool used);
