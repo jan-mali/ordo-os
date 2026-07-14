@@ -1,4 +1,5 @@
 #include <Arch/x86_64/IO.hpp>
+#include <Arch/x86_64/PageFault.hpp>
 #include <Arch/x86_64/Registers.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -43,6 +44,10 @@ static const char* exception_names[] = {
 };
 
 extern "C" void isr_handler(Registers* registers) {
+	// TODO: Consolidate Page Fault, Exceptions and Panic into one register & stack dumper
+	if (registers->int_no == 14)
+		return handle_page_fault(registers);
+
 	if (registers->int_no < 32) {
 		Logger::log_critical("Exception %d", registers->int_no);
 
