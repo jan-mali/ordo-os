@@ -2,6 +2,7 @@
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Serial.hpp>
+#include <Core/MM/KernelHeap.hpp>
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/MM/Paging.hpp>
@@ -135,6 +136,8 @@ extern "C" void kmain() {
 	Paging::init();
 
 	kernel_vmm.init();
+
+	kernel_heap.init();
 
 	// Enable interrupts after everything was set up
 	Interrupts::enable();
