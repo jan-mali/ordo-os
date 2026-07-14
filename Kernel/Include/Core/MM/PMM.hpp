@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Bitmap.hpp>
 #include <cstdint>
 #include <limine.h>
 
@@ -20,16 +21,14 @@ public:
 private:
 	void bitmap_set(uint64_t page, bool used);
 	void bitmap_set_range(uint64_t base, uint64_t length, bool used);
-	bool bitmap_get(uint64_t page);
 
-	uint8_t* bitmap;
+	Bitmap bitmap;
 
 	struct {
 		uint64_t pages_free;
 		uint64_t pages_total;
 	} stats;
 
-	uint64_t bitmap_length;
 	uint64_t address_space_pages;
 	uint64_t hhdm_offset;
 

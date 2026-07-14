@@ -73,7 +73,6 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 	uint64_t pmm_bitmap_bytes = (as_pages + 7) / 8;
 	uint64_t pmm_bitmap_pages = (pmm_bitmap_bytes + 4095) / 4096;
 
-	bitmap_length = pmm_bitmap_bytes;
 	address_space_pages = as_pages;
 
 	Logger::log_info("\t- %d pages\n", as_pages);
@@ -84,10 +83,9 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 		panic("PMM: Largest contiguous block is too small to fit the bitmap. (%D B < %D B)\n", largest_cont_size, pmm_bitmap_bytes);
 	}
 
-	bitmap = reinterpret_cast<uint8_t*>(hhdm->offset + largest_cont_at);
+	bitmap.init(reinterpret_cast<uint8_t*>(hhdm_offset + largest_cont_at), pmm_bitmap_bytes);
+	bitmap.set_all(true);
 
-	// Mark all memory as used in the beginning
-	memset(bitmap, 0xFF, pmm_bitmap_bytes);
 	stats.pages_total = (free_memory + 4095) / 4096;
 	stats.pages_free = 0;
 
@@ -117,7 +115,7 @@ void* PMM::alloc(uint64_t count) {
 	for (uint64_t start = 0; start + count <= address_space_pages; start++) {
 		bool all_free = true;
 		for (uint64_t p = 0; p < count; p++) {
-			if (bitmap_get(start + p)) {
+			if (bitmap.get(start + p)) {
 				all_free = false;
 				break;
 			}
@@ -146,7 +144,7 @@ void PMM::free(const void* ptr, uint64_t count) {
 	uint64_t start_page = reinterpret_cast<uint64_t>(ptr) >> 12;
 
 	for (uint64_t p = 0; p < count; p++) {
-		if (!bitmap_get(start_page + p)) {
+		if (!bitmap.get(start_page + p)) {
 			panic("PMM: Possible double free of physical page %X.\n", start_page + p);
 		}
 	}
@@ -157,18 +155,15 @@ void PMM::free(const void* ptr, uint64_t count) {
 }
 
 void PMM::bitmap_set(uint64_t page, bool used) {
-	uint64_t bitmap_byte = page >> 3;
-	uint8_t bitmap_bit = page & 7;
-
-	if (used == bitmap_get(page))
+	if (used == bitmap.get(page))
 		return;
 
 	if (used) {
 		stats.pages_free--;
-		bitmap[bitmap_byte] |= (1 << bitmap_bit);
+		bitmap.set(page, true);
 	} else {
 		stats.pages_free++;
-		bitmap[bitmap_byte] &= ~(1 << bitmap_bit);
+		bitmap.set(page, false);
 	}
 }
 
@@ -176,15 +171,7 @@ void PMM::bitmap_set_range(uint64_t base, uint64_t length, bool used) {
 	uint64_t page_index = base >> 12;
 	uint64_t num_pages = (length + 4095) / 4096;
 
-	// TODO: Make this way faster (check if whole words can be marked as used)
 	for (uint64_t page = 0; page < num_pages; page++) {
 		bitmap_set(page_index + page, used);
 	}
-}
-
-bool PMM::bitmap_get(uint64_t page) {
-	uint64_t bitmap_byte = page >> 3;
-	uint8_t bitmap_bit = page & 7;
-
-	return bitmap[bitmap_byte] & (1 << bitmap_bit);
 }
