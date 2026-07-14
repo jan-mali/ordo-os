@@ -1,4 +1,4 @@
-#include "Arch/x86_64/Interrupts.hpp"
+#include <Arch/x86_64/Interrupts.hpp>
 #include <Core/Panic.hpp>
 #include <Logger/Logger.hpp>
 #include <cstdarg>

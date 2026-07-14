@@ -1,9 +1,9 @@
-#include "Core/MM/PMM.hpp"
-#include "Core/Panic.hpp"
 #include <Arch/x86_64/GDT.hpp>
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Serial.hpp>
+#include <Core/MM/PMM.hpp>
+#include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>

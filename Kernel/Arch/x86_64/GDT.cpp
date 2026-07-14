@@ -1,5 +1,5 @@
-#include "Logger/Logger.hpp"
 #include <Arch/x86_64/GDT.hpp>
+#include <Logger/Logger.hpp>
 #include <cstdint>
 
 namespace GDT {

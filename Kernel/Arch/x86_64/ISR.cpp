@@ -1,7 +1,7 @@
-#include "Logger/Logger.hpp"
-#include "Logger/kstdio.hpp"
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Registers.hpp>
+#include <Logger/Logger.hpp>
+#include <Logger/kstdio.hpp>
 
 static const char scancode_to_ascii[] = {
 	0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
