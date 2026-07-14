@@ -68,8 +68,7 @@ idt:
     idt_gate_intr ; 0x1e 30,  Reserved
     idt_gate_intr ; 0x1f 31,  Reserved
 
-; FIXME: Replace this with APIC interrupts
 %rep 16
-    idt_gate_intr ; 0x20-0x2f, PIC1 & PIC2 IRQs
+    idt_gate_intr ; 0x20-0x2f, APIC
 %endrep
 idt_end:

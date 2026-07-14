@@ -95,6 +95,7 @@ void init() {
 	gdtr.size = sizeof(entries) - 1;
 
 	// TODO: Change this to something actually usable
+	Logger::log_debug("TODO: Set TSS.rsp0 to something actually usable\n");
 	tss.rsp0 = 0xDEADC0DE;
 
 	gdt_load(&gdtr);

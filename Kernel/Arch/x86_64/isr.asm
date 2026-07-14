@@ -128,7 +128,7 @@ isr_handler_noerr 29
 isr_handler_noerr 30
 isr_handler_noerr 31
 
-; TODO: Extend this for APIC interrupts
+; APIC Interrupts
 %assign i 32
 %rep 16
 isr_handler_noerr i

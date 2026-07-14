@@ -81,6 +81,7 @@ extern "C" void isr_handler(Registers* registers) {
 
 	// TODO: Handle other interrupts
 
+	Logger::log_debug("TODO: Handle other interrupts\n");
 	Logger::log_debug("Received an interrupt :^)\n");
 	Logger::log_debug("\tInterrupt no. %d\n", registers->int_no);
 }

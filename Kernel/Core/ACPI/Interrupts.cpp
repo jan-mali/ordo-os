@@ -175,7 +175,7 @@ InterruptManager::InterruptManager(MADT::MADTHeader* madt) {
 
 	// Redirect the keyboard IRQ
 	uint32_t keyboard_gsi = irq_to_gsi(0, 1); // Bus 0 = ISA, IRQ1 = PS/2 Keyboard
-	// FIXME: Get level and polarity from ISOs
+	Logger::log_debug("FIXME: InterruptManager: Get level and polarity from ISOs\n");
 	ioapic.redirect(keyboard_gsi, 33, cpu_info.apic_id, false, false, false);
 }
 
