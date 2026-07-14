@@ -55,10 +55,6 @@ void AddressSpace::activate() {
 }
 
 bool AddressSpace::map(uint64_t virt, uint64_t phys, uint64_t flags) {
-	if (virt > 0x00007FFFFFFFFFFF) {
-		panic("AddressSpace::map: Virtual address %X is out of canonical range. Kernel pages are immutable after initialization.\n", virt);
-	}
-
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t pml4_index = (virt >> 39) & 0x1FF;
