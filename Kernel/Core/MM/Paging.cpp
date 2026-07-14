@@ -207,8 +207,15 @@ AddressSpace AddressSpace::create_kernel_address_space() {
 	uint64_t limine_pml4_phys = cr3 & ~0xFFFULL;
 	auto* limine_pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(limine_pml4_phys));
 
-	for (size_t i = 256; i < 512; ++i)
+	for (size_t i = 256; i < 512; i++) {
+		// Copy Limine PDPT entries to the new PML4
 		new_pml4[i] = limine_pml4[i];
+
+		// If the entry doesn't exist, create a new PDPT for the kernel space
+		if (!(new_pml4[i] & PRESENT)) {
+			next_table(&new_pml4[i], true);
+		}
+	}
 
 	return AddressSpace(pml4_phys);
 }
