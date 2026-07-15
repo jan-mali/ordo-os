@@ -10,6 +10,53 @@ namespace Logger {
 static uint64_t indent = 0;
 
 void vlog(LogLevel level, const char* fmt, va_list args) {
+	switch (level) {
+	case LogLevel::Debug:
+		serial.write("\x1b[35m");
+		text_console.set_color(0xab47bc, 0);
+		kprintf("DEBUG");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	case LogLevel::Info:
+		serial.write("\x1b[32m");
+		text_console.set_color(0x4caf50, 0);
+		kprintf("INFO ");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	case LogLevel::Warning:
+		serial.write("\x1b[33m");
+		text_console.set_color(0xffd54f, 0);
+		kprintf("WARNING");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	case LogLevel::Error:
+		serial.write("\x1b[31m");
+		text_console.set_color(0xef5350, 0);
+		kprintf("  ERROR");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	case LogLevel::Critical:
+		serial.write("\x1b[37;41m");
+		text_console.set_color(0xffffff, 0xef5350);
+		kprintf("CRITICAL");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	default:
+		serial.write("\x1b[0m");
+		text_console.set_color(0, 0xffffff);
+		kprintf("UNKNOWN");
+		serial.write("\x1b[0m");
+		text_console.set_color(0xffffff, 0);
+		break;
+	}
+
+	kprintf(" ");
+
 	// TODO: Extend this to show more task information
 	if (Multitasking::scheduler && Multitasking::scheduler->current_thread()) {
 		// TODO: Extend this to show the current permission level
@@ -38,53 +85,6 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 	text_console.set_color(0xffffff, 0);
 
 	kprintf(": ");
-
-	switch (level) {
-	case LogLevel::Debug:
-		serial.write("\x1b[35m");
-		text_console.set_color(0xab47bc, 0);
-		kprintf("DEBUG");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	case LogLevel::Info:
-		serial.write("\x1b[32m");
-		text_console.set_color(0x4caf50, 0);
-		kprintf("INFO");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	case LogLevel::Warning:
-		serial.write("\x1b[33m");
-		text_console.set_color(0xffd54f, 0);
-		kprintf("WARNING");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	case LogLevel::Error:
-		serial.write("\x1b[31m");
-		text_console.set_color(0xef5350, 0);
-		kprintf("ERROR");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	case LogLevel::Critical:
-		serial.write("\x1b[37;41m");
-		text_console.set_color(0xffffff, 0xef5350);
-		kprintf("CRITICAL");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	default:
-		serial.write("\x1b[0m");
-		text_console.set_color(0, 0xffffff);
-		kprintf("UNKNOWN");
-		serial.write("\x1b[0m");
-		text_console.set_color(0xffffff, 0);
-		break;
-	}
-
-	kprintf(" ");
 
 	for (uint64_t i = 0; i < indent; i++) {
 		kprintf("\t");
