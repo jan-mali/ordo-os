@@ -2,7 +2,9 @@
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
+#include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
+#include <Utility/String.hpp>
 
 namespace Multitasking {
 
@@ -11,10 +13,22 @@ static uint32_t max_thread_id = 0;
 
 void thread_entry();
 
-Thread* create_thread(void (*entry)(void*), void* argument) {
+Thread* create_thread(void (*entry)(void*), void* argument, const char* name) {
 	Thread* thread = new Thread();
 	uint8_t* stack = reinterpret_cast<uint8_t*>(kernel_vmm.allocate_pages(STACK_PAGES));
 	thread->id = ++max_thread_id;
+
+	if (name) {
+		size_t name_length = strlen(name);
+		if (name_length > 0) {
+			memcpy(thread->name, name, name_length > 32 ? 32 : name_length);
+			thread->name[31] = 0;
+		} else {
+			memcpy(thread->name, "unnamed", sizeof("unnamed"));
+		}
+	} else {
+		memcpy(thread->name, "unnamed", sizeof("unnamed"));
+	}
 
 	thread->stack_base = stack;
 	// FIXME: Use Paging::PAGE_SIZE
@@ -64,7 +78,6 @@ Thread* create_thread(void (*entry)(void*), void* argument) {
 }
 
 void thread_entry() {
-
 	uint64_t rsp;
 	asm volatile("mov %%rsp, %0" : "=r"(rsp));
 
@@ -79,15 +92,10 @@ void thread_entry() {
 
 	Logger::log_debug("thread_entry: Thread %d returned control\n", scheduler->current_thread()->id);
 
-	Logger::log_debug("thread_entry: TODO: Use Scheduler::yield()\n");
-
+	// TODO: Kill these threads at some point
 	while (true) {
-		asm volatile("hlt");
+		scheduler->yield();
 	}
-
-	scheduler->yield();
-
-	panic("Dead thread was scheduled.\n");
 }
 
 }

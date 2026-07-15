@@ -10,7 +10,6 @@
 #include <Logger/kstdio.hpp>
 
 static bool shift = false;
-static uint64_t timer = 0;
 
 static const char scancode_to_ascii[] = {
 	0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
@@ -92,6 +91,11 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 	if (registers->int_no == 32) {
 		// LAPIC Timer
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
+		return Multitasking::scheduler->yield_from_interrupt(registers);
+	}
+
+	if (registers->int_no == 127) {
+		// Scheduler yield
 		return Multitasking::scheduler->yield_from_interrupt(registers);
 	}
 

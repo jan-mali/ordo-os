@@ -15,7 +15,7 @@ void Scheduler::add_thread(Thread* thread) {
 static size_t thread_index = 0;
 
 void Scheduler::yield() {
-	panic("TODO: Scheduler::yield\n");
+	asm volatile("int $0x7F" ::: "memory");
 }
 
 uint64_t Scheduler::yield_from_interrupt(Registers* regs) {

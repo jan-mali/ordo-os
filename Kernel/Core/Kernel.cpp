@@ -84,8 +84,7 @@ extern "C" constructor __init_array[];
 extern "C" constructor __init_array_end[];
 
 void idle_task(void*);
-void task_a(void*);
-void task_b(void*);
+void init_stage2(void*);
 
 extern "C" void kmain() {
 	// This is guaranteed by Limine but we ensure it here for sanity reasons
@@ -158,9 +157,8 @@ extern "C" void kmain() {
 
 	Multitasking::init();
 
-	Multitasking::scheduler->add_thread(Multitasking::create_thread(idle_task, nullptr));
-	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_a, nullptr));
-	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_b, nullptr));
+	Multitasking::scheduler->add_thread(Multitasking::create_thread(idle_task, nullptr, "idle_task"));
+	Multitasking::scheduler->add_thread(Multitasking::create_thread(init_stage2, nullptr, "init_stage2"));
 
 	// The Scheduler also enables interrupts
 	Multitasking::scheduler->start();
@@ -174,15 +172,6 @@ void idle_task(void*) {
 	}
 }
 
-void task_a(void*) {
-	while (true) {
-		Logger::log_debug("Test A\n");
-	}
-}
-
-void task_b(void*) {
-	for (int i = 0; i < 5; i++) {
-		Logger::log_debug("Test B\n");
-	}
-	panic("test\n");
+void init_stage2(void*) {
+	Logger::log_info("Continuing boot from init_stage2! :)\n");
 }

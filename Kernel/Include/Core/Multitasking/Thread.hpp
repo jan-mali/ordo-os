@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+struct Process;
+
 namespace Multitasking {
 
 enum class ThreadState {
@@ -24,8 +26,12 @@ struct Thread {
 	size_t stack_size;
 
 	ThreadState state;
+
+	char name[32];
+
+	Process* process;
 };
 
-Thread* create_thread(void (*entry)(void*), void* argument);
+Thread* create_thread(void (*entry)(void*), void* argument, const char* name);
 
 }

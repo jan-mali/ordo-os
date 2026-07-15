@@ -22,7 +22,11 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 		}
 		Multitasking::Thread* thread = Multitasking::scheduler->current_thread();
 		// kprintf("no-name(no-pid:%d)", thread->id);
-		kprintf("thread(%d)", thread->id);
+		if (thread->process) {
+			// TODO: Print process name if different from thread name
+			kprintf("process-name/");
+		}
+		kprintf("%s(%d:%d)", *thread->name ? thread->name : "unnamed thread", thread->process ? 0 /* TODO: PID */ : 0, thread->id);
 	} else {
 		serial.write("\x1b[96m");
 		text_console.set_color(0x00e5ff, 0);

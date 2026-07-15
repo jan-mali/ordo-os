@@ -71,4 +71,9 @@ idt:
 %rep 16
     idt_gate_intr ; 0x20-0x2f, APIC
 %endrep
+
+times 2 * 79 dq 0 ; 79 empty entries, 0x30-0x7e
+
+    idt_gate_intr ; 0x7f 127, Scheduler yield
+
 idt_end:

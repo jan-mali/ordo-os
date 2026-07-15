@@ -1,17 +1,10 @@
 #include <Arch/x86_64/Serial.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/kstdio.hpp>
+#include <Utility/String.hpp>
 #include <cstdint>
 
 namespace Logger {
-
-static uint32_t strlen(const char* str) {
-	uint32_t len = 0;
-	while (*str++) {
-		len++;
-	}
-	return len;
-}
 
 static void putc(char c) {
 	serial.putc(c);

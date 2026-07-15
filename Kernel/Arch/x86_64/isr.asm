@@ -33,6 +33,8 @@ init_isr_and_lidt:
 %assign i i+1
 %endrep
 
+    load_isr 127, isr_handler_127 ; Scheduler yield
+
     lidt [rel idtr]
     pop rbx
     ret
@@ -141,3 +143,5 @@ isr_handler_noerr 31
 isr_handler_noerr i
 %assign i i+1
 %endrep
+
+isr_handler_noerr 127 ; Scheduler yield
