@@ -71,7 +71,8 @@ void Scheduler::start() {
 
 	Logger::log_info("Scheduler: About to start scheduling.\n");
 
-	Interrupts::enable();
+	// IRQs are enabled by restoring RFLAGS from the interrupt frame, so we don't need to enable them here.
+	// In fact it would lead to a race condition since the timer could fire before we do schedule the first thread.
 	restore_interrupt_context(current->interrupt_rsp);
 }
 
