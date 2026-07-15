@@ -162,30 +162,27 @@ extern "C" void kmain() {
 	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_a, nullptr));
 	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_b, nullptr));
 
+	// The Scheduler also enables interrupts
 	Multitasking::scheduler->start();
-
-	// TODO: Remember to enable interrupts somewhere
-	// Interrupts::enable();
 
 	panic("Reached end of kmain\n");
 }
 
 void idle_task(void*) {
 	while (true) {
-		Multitasking::scheduler->yield();
+		asm volatile("hlt");
 	}
 }
 
 void task_a(void*) {
 	while (true) {
-		serial.putc('A');
-		Multitasking::scheduler->yield();
+		Logger::log_debug("Test A\n");
 	}
 }
 
 void task_b(void*) {
 	for (int i = 0; i < 5; i++) {
-		serial.putc('B');
-		Multitasking::scheduler->yield();
+		Logger::log_debug("Test B\n");
 	}
+	panic("test\n");
 }

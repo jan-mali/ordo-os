@@ -21,6 +21,8 @@ COMMON_FLAGS := \
     -mno-red-zone \
     -fno-tree-vectorize \
     -fno-tree-slp-vectorize \
+    -fno-omit-frame-pointer \
+    -fno-optimize-sibling-calls \
     -mcmodel=kernel
 
 CFLAGS := \

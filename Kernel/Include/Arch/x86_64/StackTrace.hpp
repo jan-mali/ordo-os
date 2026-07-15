@@ -31,6 +31,9 @@ static void stack_trace() {
 			frame->rip
 		);
 
+		if (frame->rbp <= frame)
+			break;
+
 		frame = frame->rbp;
 	}
 
@@ -41,6 +44,9 @@ static void stack_trace() {
 			" %X",
 			frame2->rip
 		);
+
+		if (frame2->rbp <= frame2)
+			break;
 
 		frame2 = frame2->rbp;
 	}

@@ -24,16 +24,38 @@ Thread* create_thread(void (*entry)(void*), void* argument) {
 	thread->state = Multitasking::ThreadState::Ready;
 
 	uint64_t* rsp = reinterpret_cast<uint64_t*>(thread->stack_top);
-	*(--rsp) = 0;										  // Invalid return address just in case
-	*(--rsp) = reinterpret_cast<uint64_t>(&thread_entry); // Task start
-	*(--rsp) = 0;										  // rbx
-	*(--rsp) = 0;										  // rbp
-	*(--rsp) = 0;										  // r12
-	*(--rsp) = 0;										  // r13
-	*(--rsp) = 0;										  // r14
-	*(--rsp) = 0;										  // r15
+	*(--rsp) = 0x0; // Invalid address for stack unwinding
 
-	thread->context.rsp = reinterpret_cast<uint64_t>(rsp);
+	// iretq frame
+	*(--rsp) = 0x10;										  // SS
+	*(--rsp) = reinterpret_cast<uint64_t>(thread->stack_top); // RSP
+	*(--rsp) = 0x202;										  // RFLAGS (IF enabled)
+	*(--rsp) = 0x08;										  // CS
+	*(--rsp) = reinterpret_cast<uint64_t>(&thread_entry);	  // RIP
+
+	// error code + interrupt number
+	*(--rsp) = 0; // err_code
+	*(--rsp) = 0; // int_no
+
+	// registers pushed by the ISR
+	*(--rsp) = 0; // r15
+	*(--rsp) = 0; // r14
+	*(--rsp) = 0; // r13
+	*(--rsp) = 0; // r12
+	*(--rsp) = 0; // r11
+	*(--rsp) = 0; // r10
+	*(--rsp) = 0; // r9
+	*(--rsp) = 0; // r8
+
+	*(--rsp) = 0; // rbp
+	*(--rsp) = 0; // rdi
+	*(--rsp) = 0; // rsi
+	*(--rsp) = 0; // rdx
+	*(--rsp) = 0; // rcx
+	*(--rsp) = 0; // rbx
+	*(--rsp) = 0; // rax
+
+	thread->interrupt_rsp = reinterpret_cast<uint64_t>(rsp);
 
 	thread->entry = entry;
 	thread->arguemnt = argument;
@@ -42,6 +64,13 @@ Thread* create_thread(void (*entry)(void*), void* argument) {
 }
 
 void thread_entry() {
+
+	uint64_t rsp;
+	asm volatile("mov %%rsp, %0" : "=r"(rsp));
+
+	Logger::log_debug("thread_entry: Thread %d stack=%X\n", scheduler->current_thread()->id, rsp);
+	Logger::log_debug("thread_entry: About to run call the thread entrypoint at %X\n", scheduler->current_thread()->entry);
+
 	// Call the thread entry function
 	scheduler->current_thread()->entry(scheduler->current_thread()->arguemnt);
 
@@ -49,6 +78,12 @@ void thread_entry() {
 	scheduler->current_thread()->state = ThreadState::Dead;
 
 	Logger::log_debug("thread_entry: Thread %d returned control\n", scheduler->current_thread()->id);
+
+	Logger::log_debug("thread_entry: TODO: Use Scheduler::yield()\n");
+
+	while (true) {
+		asm volatile("hlt");
+	}
 
 	scheduler->yield();
 

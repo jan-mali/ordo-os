@@ -4,6 +4,7 @@
 #include <Core/ACPI/Interrupts.hpp>
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
+#include <Core/Multitasking/Scheduler.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -64,10 +65,12 @@ static const char* exception_names[] = {
 	"Control Protection Exception"
 };
 
-extern "C" void isr_handler(Registers* registers) {
+extern "C" uint64_t isr_handler(Registers* registers) {
 	// TODO: Consolidate Page Fault, Exceptions and Panic into one register & stack dumper
-	if (registers->int_no == 14)
-		return handle_page_fault(registers);
+	if (registers->int_no == 14) {
+		handle_page_fault(registers);
+		return 0;
+	}
 
 	if (registers->int_no < 32) {
 		Logger::reset_indent();
@@ -88,18 +91,8 @@ extern "C" void isr_handler(Registers* registers) {
 
 	if (registers->int_no == 32) {
 		// LAPIC Timer
-		int row = text_console.get_cursor_row();
-		int col = text_console.get_cursor_column();
-
-		text_console.set_color(timer++ & 0xFFFFFF, 0xFFFFFF);
-		text_console.set_cursor(0, text_console.get_width() - 5);
-		text_console.write("TIMER");
-		text_console.set_color(0xFFFFFF, 0);
-
-		text_console.set_cursor(row, col);
-
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
-		return;
+		return Multitasking::scheduler->yield_from_interrupt(registers);
 	}
 
 	if (registers->int_no == 33) {
@@ -134,7 +127,7 @@ extern "C" void isr_handler(Registers* registers) {
 		}
 
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
-		return;
+		return 0;
 	}
 
 	// TODO: Handle other interrupts
@@ -142,4 +135,6 @@ extern "C" void isr_handler(Registers* registers) {
 	Logger::log_debug("TODO: Handle other interrupts\n");
 	Logger::log_debug("Received an interrupt :^)\n");
 	Logger::log_debug("\tInterrupt no. %d\n", registers->int_no);
+
+	return 0;
 }

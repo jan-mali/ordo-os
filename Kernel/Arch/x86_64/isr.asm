@@ -58,6 +58,13 @@ isr_handler_common:
     mov rdi, rsp ; Pointer to the Registers struct
     call isr_handler
 
+    test rax, rax
+    jz .no_switch
+
+    mov rsp, rax
+
+.no_switch
+
     pop rax
     pop rbx
     pop rcx
