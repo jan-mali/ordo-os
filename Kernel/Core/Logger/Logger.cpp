@@ -1,4 +1,6 @@
 #include <Arch/x86_64/Serial.hpp>
+#include <Core/Multitasking/Scheduler.hpp>
+#include <Core/Multitasking/Thread.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -8,8 +10,8 @@ namespace Logger {
 static uint64_t indent = 0;
 
 void vlog(LogLevel level, const char* fmt, va_list args) {
-	// TODO: Extend this to show the current task
-	if (false) {
+	// TODO: Extend this to show more task information
+	if (Multitasking::scheduler && Multitasking::scheduler->current_thread()) {
 		// TODO: Extend this to show the current permission level
 		if (false) {
 			serial.write("\x1b[93m");
@@ -18,7 +20,9 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 			serial.write("\x1b[96m");
 			text_console.set_color(0x00e5ff, 0);
 		}
-		kprintf("some-process(some-pid)");
+		Multitasking::Thread* thread = Multitasking::scheduler->current_thread();
+		// kprintf("no-name(no-pid:%d)", thread->id);
+		kprintf("thread(%d)", thread->id);
 	} else {
 		serial.write("\x1b[96m");
 		text_console.set_color(0x00e5ff, 0);
