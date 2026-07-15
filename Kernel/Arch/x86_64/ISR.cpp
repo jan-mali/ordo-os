@@ -79,6 +79,8 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 			Logger::kprintf(" - %s\n", exception_names[registers->int_no]);
 		}
 
+		Logger::log_critical("Error Code: %X\n", registers->err_code);
+
 		Logger::log_critical("RIP=%X\tRSP=%X\n", registers->frame.rip, registers->frame.rsp);
 		Logger::log_critical("RAX=%X\tRBX=%X\n", registers->rax, registers->rbx);
 		Logger::log_critical("RCX=%X\tRDX=%X\n", registers->rcx, registers->rdx);
