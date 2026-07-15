@@ -8,6 +8,8 @@
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/MM/Paging.hpp>
+#include <Core/Multitasking/Scheduler.hpp>
+#include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
@@ -81,6 +83,10 @@ using constructor = void (*)();
 extern "C" constructor __init_array[];
 extern "C" constructor __init_array_end[];
 
+void idle_task(void*);
+void task_a(void*);
+void task_b(void*);
+
 extern "C" void kmain() {
 	// This is guaranteed by Limine but we ensure it here for sanity reasons
 	Interrupts::disable();
@@ -150,9 +156,36 @@ extern "C" void kmain() {
 	ACPI::init(rsdp_request.response);
 	ACPI::Timer::init();
 
-	// Enable interrupts after everything was set up
-	Interrupts::enable();
+	Multitasking::init();
 
-	// We're done, just hang...
-	halt();
+	Multitasking::scheduler->add_thread(Multitasking::create_thread(idle_task, nullptr));
+	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_a, nullptr));
+	Multitasking::scheduler->add_thread(Multitasking::create_thread(task_b, nullptr));
+
+	Multitasking::scheduler->start();
+
+	// TODO: Remember to enable interrupts somewhere
+	// Interrupts::enable();
+
+	panic("Reached end of kmain\n");
+}
+
+void idle_task(void*) {
+	while (true) {
+		Multitasking::scheduler->yield();
+	}
+}
+
+void task_a(void*) {
+	while (true) {
+		serial.putc('A');
+		Multitasking::scheduler->yield();
+	}
+}
+
+void task_b(void*) {
+	for (int i = 0; i < 5; i++) {
+		serial.putc('B');
+		Multitasking::scheduler->yield();
+	}
 }
