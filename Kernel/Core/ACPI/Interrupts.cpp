@@ -64,7 +64,11 @@ void IOAPIC::redirect(uint32_t gsi, uint8_t vector, uint8_t destination, bool le
 }
 
 void LocalAPIC::eoi() {
-	mmio[0xB0 / 4] = 0;
+	write32(0xB0, 0);
+}
+
+void LocalAPIC::write32(uint32_t offset, uint32_t value) {
+	mmio[offset / sizeof(uint32_t)] = value;
 }
 
 InterruptManager::InterruptManager(MADT::MADTHeader* madt) {
@@ -171,7 +175,7 @@ InterruptManager::InterruptManager(MADT::MADTHeader* madt) {
 	// Ensure the MMIO for the Local APIC is mapped correctly into virtual memory
 	// Do it here in case the address was changed by an Local x2APIC entry
 	Paging::kernel_address_space.map_mmio_to_hhdm(lapic_address);
-	lapic.mmio = reinterpret_cast<uint32_t*>(pmm.translate_to_hhdm(lapic_address));
+	lapic_.mmio = reinterpret_cast<uint32_t*>(pmm.translate_to_hhdm(lapic_address));
 
 	// Redirect the keyboard IRQ
 	uint32_t keyboard_gsi = irq_to_gsi(0, 1); // Bus 0 = ISA, IRQ1 = PS/2 Keyboard
@@ -187,10 +191,6 @@ uint32_t InterruptManager::irq_to_gsi(uint8_t bus, uint8_t irq) {
 	}
 
 	return irq;
-}
-
-void InterruptManager::eoi() {
-	lapic.eoi();
 }
 
 void init(MADT::MADTHeader* madt) {

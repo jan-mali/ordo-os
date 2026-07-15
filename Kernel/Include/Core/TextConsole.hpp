@@ -24,6 +24,22 @@ public:
 	void set_cursor(int row, int column);
 	void set_color(uint32_t fg, uint32_t bg);
 
+	inline int get_cursor_row() const {
+		return cursor_y;
+	}
+
+	inline int get_cursor_column() const {
+		return cursor_x;
+	}
+
+	inline int get_width() const {
+		return pitch / sizeof(uint32_t) / 8;
+	}
+
+	inline int get_height() const {
+		return height;
+	}
+
 	void draw();
 	void draw(int row, int column);
 

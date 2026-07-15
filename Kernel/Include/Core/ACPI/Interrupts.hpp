@@ -86,7 +86,7 @@ class LocalAPIC {
 
 public:
 	void eoi();
-	void set_timer();
+	void write32(uint32_t offset, uint32_t value);
 
 private:
 	volatile uint32_t* mmio;
@@ -98,13 +98,15 @@ public:
 
 	uint32_t irq_to_gsi(uint8_t bus, uint8_t irq);
 
-	void eoi();
+	inline LocalAPIC& lapic() {
+		return lapic_;
+	}
 
 private:
 	// TODO: Support SMP in the future
 	IOAPIC ioapic;
 	CPUInfo cpu_info;
-	LocalAPIC lapic;
+	LocalAPIC lapic_;
 
 	bool dual_8259_legacy_pics_installed;
 

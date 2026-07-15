@@ -9,6 +9,7 @@
 #include <Logger/kstdio.hpp>
 
 static bool shift = false;
+static uint64_t timer = 0;
 
 static const char scancode_to_ascii[] = {
 	0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
@@ -85,6 +86,22 @@ extern "C" void isr_handler(Registers* registers) {
 		}
 	}
 
+	if (registers->int_no == 32) {
+		// LAPIC Timer
+		int row = text_console.get_cursor_row();
+		int col = text_console.get_cursor_column();
+
+		text_console.set_color(timer++ & 0xFFFFFF, 0xFFFFFF);
+		text_console.set_cursor(0, text_console.get_width() - 5);
+		text_console.write("TIMER");
+		text_console.set_color(0xFFFFFF, 0);
+
+		text_console.set_cursor(row, col);
+
+		ACPI::Interrupts::interrupt_manager->lapic().eoi();
+		return;
+	}
+
 	if (registers->int_no == 33) {
 		// PS/2 Keyboard
 		uint8_t scancode = IO::inb(0x60);
@@ -116,8 +133,7 @@ extern "C" void isr_handler(Registers* registers) {
 			}
 		}
 
-		ACPI::Interrupts::interrupt_manager->eoi();
-
+		ACPI::Interrupts::interrupt_manager->lapic().eoi();
 		return;
 	}
 

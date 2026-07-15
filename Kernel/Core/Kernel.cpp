@@ -3,6 +3,7 @@
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Serial.hpp>
 #include <Core/ACPI/ACPI.hpp>
+#include <Core/ACPI/Timer.hpp>
 #include <Core/MM/KernelHeap.hpp>
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
@@ -147,6 +148,7 @@ extern "C" void kmain() {
 	kernel_heap.init();
 
 	ACPI::init(rsdp_request.response);
+	ACPI::Timer::init();
 
 	// Enable interrupts after everything was set up
 	Interrupts::enable();
