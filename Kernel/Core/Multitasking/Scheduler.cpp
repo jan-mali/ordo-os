@@ -6,7 +6,10 @@
 
 namespace Multitasking {
 
+void idle_task(void*);
+
 Scheduler* scheduler;
+Thread* idle_task_thread;
 
 void Scheduler::add_thread(Thread* thread) {
 	threads.push_back(thread);
@@ -45,7 +48,7 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 		if (old->state == ThreadState::Running) {
 			return reinterpret_cast<uint64_t>(regs);
 		}
-		panic("Scheduler: No runnable threads.\n");
+		next = idle_task_thread;
 	}
 
 	if (old->state == ThreadState::Running) {
@@ -64,7 +67,11 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 }
 
 void Scheduler::start() {
-	current = threads[0];
+	if (threads.size() > 0) {
+		current = threads[0];
+	} else {
+		current = idle_task_thread;
+	}
 
 	current->state = ThreadState::Running;
 	thread_index = 0;
@@ -79,7 +86,16 @@ void Scheduler::start() {
 void init() {
 	scheduler = new Scheduler();
 
+	// Create the idle task
+	idle_task_thread = Multitasking::create_thread(idle_task, nullptr, "idle_task");
+
 	Logger::log_info("Multitasking is initialized.\n");
+}
+
+void idle_task(void*) {
+	while (true) {
+		asm volatile("hlt");
+	}
 }
 
 }

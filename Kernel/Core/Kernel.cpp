@@ -83,7 +83,6 @@ using constructor = void (*)();
 extern "C" constructor __init_array[];
 extern "C" constructor __init_array_end[];
 
-void idle_task(void*);
 void init_stage2(void*);
 
 extern "C" void kmain() {
@@ -157,19 +156,12 @@ extern "C" void kmain() {
 
 	Multitasking::init();
 
-	Multitasking::scheduler->add_thread(Multitasking::create_thread(idle_task, nullptr, "idle_task"));
 	Multitasking::scheduler->add_thread(Multitasking::create_thread(init_stage2, nullptr, "init_stage2"));
 
 	// The Scheduler also enables interrupts
 	Multitasking::scheduler->start();
 
 	panic("Reached end of kmain\n");
-}
-
-void idle_task(void*) {
-	while (true) {
-		asm volatile("hlt");
-	}
 }
 
 void init_stage2(void*) {
