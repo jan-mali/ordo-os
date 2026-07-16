@@ -2,12 +2,12 @@
 
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
-#include <Utility/Spinlock.hpp>
+#include <Utility/RawSpinlock.hpp>
 #include <Utility/Vector.hpp>
 
 class WaitQueue {
 public:
-	void sleep(Spinlock& external_lock);
+	void sleep(RawSpinlock& external_lock);
 	void wake_one();
 	void wake_all();
 

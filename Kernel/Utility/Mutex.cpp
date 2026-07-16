@@ -3,29 +3,30 @@
 #include <Utility/Spinlock.hpp>
 
 void Mutex::lock() {
-	internal_lock.lock();
+	internal_lock.acquire();
 
 	while (locked) {
 		// waiters.sleep() assumes we have the lock locked
-		// it also unlocks the lock but only returns control after we have woken up
+		// it only returns control after we have woken up
 		waiters.sleep(internal_lock);
-		internal_lock.lock();
 	}
 
 	locked = true;
 	owner = Multitasking::scheduler->current_thread();
 
-	internal_lock.unlock();
+	internal_lock.release();
 }
 
 void Mutex::unlock() {
-	SpinlockGuard guard(internal_lock);
+	internal_lock.acquire();
 
-    if (owner != Multitasking::scheduler->current_thread())
-        panic("Mutex unlock by non-owner");
+	if (owner != Multitasking::scheduler->current_thread())
+		panic("Mutex unlock by non-owner");
 
 	locked = false;
 	owner = nullptr;
 
 	waiters.wake_one();
+
+	internal_lock.release();
 }

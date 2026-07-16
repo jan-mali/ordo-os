@@ -1,10 +1,10 @@
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
-#include <Utility/Spinlock.hpp>
+#include <Utility/RawSpinlock.hpp>
 #include <Utility/Vector.hpp>
 #include <Utility/WaitQueue.hpp>
 
-void WaitQueue::sleep(Spinlock& external_lock) {
+void WaitQueue::sleep(RawSpinlock& external_lock) {
 	Multitasking::Thread* current = Multitasking::scheduler->current_thread();
 
 	// Assume the extern_lock is locked
@@ -12,7 +12,7 @@ void WaitQueue::sleep(Spinlock& external_lock) {
 	current->state = Multitasking::ThreadState::Blocked;
 	waiters.push_back(current);
 
-	external_lock.unlock();
+	external_lock.release();
 
 	// If a preemption happens here we are already on the waiters list
 	// so we get resumed if wake_one() is called
@@ -21,6 +21,8 @@ void WaitQueue::sleep(Spinlock& external_lock) {
 
 	// The only point at which execution comes back here (yield has returned & this function will return now)
 	// is when we have woken up
+
+	external_lock.acquire();
 }
 
 void WaitQueue::wake_one() {
