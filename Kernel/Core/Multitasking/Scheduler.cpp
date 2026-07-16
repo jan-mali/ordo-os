@@ -83,6 +83,18 @@ void Scheduler::start() {
 	restore_interrupt_context(current->interrupt_rsp);
 }
 
+void Scheduler::block() {
+	current->state = ThreadState::Blocked;
+}
+
+void Scheduler::wake(Thread* thread) {
+	// FIXME: What if the current thread was destroyed before it is meant to wake up?
+	// Then this is a use-after-free
+	// So maybe somehow guarantee that a blocked thread cannot possibly be destroyed?
+
+	thread->state = ThreadState::Ready;
+}
+
 void init() {
 	scheduler = new Scheduler();
 

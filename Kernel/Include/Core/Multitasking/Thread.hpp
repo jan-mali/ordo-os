@@ -10,6 +10,8 @@ namespace Multitasking {
 enum class ThreadState {
 	Ready,
 	Running,
+	Sleeping,
+	Blocked,
 	Dead
 };
 

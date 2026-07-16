@@ -17,6 +17,9 @@ public:
 
 	void start();
 
+	void block();
+	void wake(Thread* thread);
+
 	inline Thread* current_thread() {
 		return current;
 	}
