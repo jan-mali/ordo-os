@@ -21,6 +21,9 @@ void Mutex::lock() {
 void Mutex::unlock() {
 	SpinlockGuard guard(internal_lock);
 
+    if (owner != Multitasking::scheduler->current_thread())
+        panic("Mutex unlock by non-owner");
+
 	locked = false;
 	owner = nullptr;
 
