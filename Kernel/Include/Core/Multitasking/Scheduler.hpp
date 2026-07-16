@@ -22,6 +22,14 @@ public:
 
 	void dump();
 
+	void disable_preemption() {
+		preemption_disabled = true;
+	}
+
+	void enable_preemption() {
+		preemption_disabled = false;
+	}
+
 	inline Thread* current_thread() {
 		return current;
 	}
@@ -29,6 +37,7 @@ public:
 private:
 	Vector<Thread*> threads;
 	Thread* current;
+	bool preemption_disabled;
 };
 
 void init();

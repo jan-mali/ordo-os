@@ -24,6 +24,13 @@ void Scheduler::yield() {
 uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 	Thread* old = current;
 
+	if (preemption_disabled) {
+		if (old->state != ThreadState::Running) {
+			panic("Preemption is disabled but thread %d cannot be scheduled as it is %s.\n", old->id, thread_state_to_string(old->state));
+		}
+		return 0;
+	}
+
 	// Logger::log_debug("Saving interrupt rsp %X for thread %d\n", regs, current->id);
 
 	// Save the interrupted thread's stack
@@ -75,6 +82,7 @@ void Scheduler::start() {
 
 	current->state = ThreadState::Running;
 	thread_index = 0;
+	enable_preemption();
 
 	Logger::log_info("Scheduler: About to start scheduling.\n");
 
