@@ -4,6 +4,8 @@
 
 TextConsole text_console;
 
+// TODO: Maybe add a Spinlock somewhere here
+
 void TextConsole::init(int fb_pitch, int fb_height, volatile uint32_t* fb) {
 	columns = fb_pitch / 4 / 8;
 	rows = fb_height / 16;

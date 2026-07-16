@@ -5,9 +5,11 @@
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
+#include <Utility/Spinlock.hpp>
 #include <limine.h>
 
 KernelVMM kernel_vmm;
+Spinlock vmm_spinlock;
 
 void KernelVMM::init() {
 	if (initialized) {
@@ -33,6 +35,8 @@ void* KernelVMM::allocate_pages(uint64_t count) {
 	if (!initialized) {
 		panic("KernelVMM: Not yet initialized.\n");
 	}
+
+	SpinlockGuard guard(vmm_spinlock);
 
 	for (uint64_t start = 0; start + count <= KERNEL_HEAP_PAGES; start++) {
 		bool all_free = true;
@@ -65,6 +69,8 @@ void KernelVMM::free_pages(const void* ptr, uint64_t count) {
 	if (!initialized) {
 		panic("KernelVMM: Not yet initialized.\n");
 	}
+
+	SpinlockGuard guard(vmm_spinlock);
 
 	uint64_t address = reinterpret_cast<uint64_t>(ptr);
 

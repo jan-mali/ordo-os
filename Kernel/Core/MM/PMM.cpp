@@ -3,10 +3,13 @@
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
+#include <Utility/Spinlock.hpp>
 #include <cstddef>
 #include <limine.h>
 
 PMM pmm;
+
+Spinlock pmm_spinlock;
 
 static const char* memmap_entry_types[] = {
 	"USABLE",
@@ -112,6 +115,9 @@ void* PMM::alloc(uint64_t count) {
 	if (!initialized) {
 		panic("PMM: Not yet initialized.\n");
 	}
+
+	SpinlockGuard guard(pmm_spinlock);
+
 	for (uint64_t start = 0; start + count <= address_space_pages; start++) {
 		bool all_free = true;
 		for (uint64_t p = 0; p < count; p++) {
@@ -140,6 +146,8 @@ void PMM::free(const void* ptr, uint64_t count) {
 
 	if (count == 0)
 		return;
+
+	SpinlockGuard guard(pmm_spinlock);
 
 	uint64_t start_page = reinterpret_cast<uint64_t>(ptr) >> 12;
 

@@ -3,11 +3,14 @@
 #include <Core/Panic.hpp>
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
+#include <Utility/Spinlock.hpp>
 
 namespace Paging {
 
 AddressSpace kernel_address_space;
 AddressSpace* current_address_space;
+
+Spinlock paging_spinlock;
 
 static uint64_t* next_table(uint64_t* entry, bool create) {
 	if (*entry & static_cast<uint64_t>(PageFlags::Present)) {
@@ -50,11 +53,15 @@ AddressSpace& AddressSpace::operator=(AddressSpace&& other) {
 }
 
 void AddressSpace::activate() {
+	SpinlockGuard guard(paging_spinlock);
+
 	asm volatile("mov %0, %%cr3" : : "r"(pml4_physical) : "memory");
 	current_address_space = this;
 }
 
 bool AddressSpace::map(uint64_t virt, uint64_t phys, uint64_t flags) {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t pml4_index = (virt >> 39) & 0x1FF;
@@ -74,6 +81,8 @@ bool AddressSpace::map(uint64_t virt, uint64_t phys, uint64_t flags) {
 }
 
 void AddressSpace::unmap(uint64_t virt) {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t pml4_index = (virt >> 39) & 0x1FF;
@@ -103,6 +112,8 @@ bool AddressSpace::map_mmio_to_hhdm(uint64_t phys) {
 }
 
 bool AddressSpace::is_mapped(uint64_t virt) const {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t pml4_index = (virt >> 39) & 0x1FF;
@@ -126,6 +137,8 @@ bool AddressSpace::is_mapped(uint64_t virt) const {
 }
 
 uint64_t AddressSpace::flags(uint64_t virt) const {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t pml4_index = (virt >> 39) & 0x1FF;
@@ -149,6 +162,8 @@ uint64_t AddressSpace::flags(uint64_t virt) const {
 }
 
 uint64_t AddressSpace::translate(uint64_t virt) const {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t* pml4 = reinterpret_cast<uint64_t*>(pmm.translate_to_hhdm(pml4_physical));
 
 	uint64_t i4 = (virt >> 39) & 0x1FF;
@@ -188,6 +203,8 @@ uint64_t AddressSpace::translate_hhdm(uint64_t virt) const {
 }
 
 AddressSpace AddressSpace::create_kernel_address_space() {
+	SpinlockGuard guard(paging_spinlock);
+
 	uint64_t pml4_phys = reinterpret_cast<uint64_t>(pmm.alloc(1));
 	if (!pml4_phys)
 		panic("Failed to allocate PML4");

@@ -4,12 +4,17 @@
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
+#include <Utility/IRQSpinlock.hpp>
 
 namespace Logger {
 
 static uint64_t indent = 0;
 
+IRQSpinlock logger_lock;
+
 void vlog(LogLevel level, const char* fmt, va_list args) {
+	IRQSpinlockGuard guard(logger_lock);
+
 	switch (level) {
 	case LogLevel::Debug:
 		serial.write("\x1b[35m");

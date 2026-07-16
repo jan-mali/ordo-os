@@ -1,7 +1,10 @@
 #pragma once
 
+#include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Registers.hpp>
 #include <Core/Multitasking/Thread.hpp>
+#include <Core/Panic.hpp>
+#include <Logger/Logger.hpp>
 #include <Utility/Vector.hpp>
 
 namespace Multitasking {
@@ -23,11 +26,19 @@ public:
 	void dump();
 
 	void disable_preemption() {
-		preemption_disabled = true;
+		// This is a critical section
+		uint64_t flags = Interrupts::store_and_disable();
+		preemption_disable_count++;
+		Interrupts::restore(flags);
 	}
 
 	void enable_preemption() {
-		preemption_disabled = false;
+		// This is a critical section
+		uint64_t flags = Interrupts::store_and_disable();
+		if (preemption_disable_count > 0) {
+			preemption_disable_count--;
+		}
+		Interrupts::restore(flags);
 	}
 
 	inline Thread* current_thread() {
@@ -37,7 +48,7 @@ public:
 private:
 	Vector<Thread*> threads;
 	Thread* current;
-	bool preemption_disabled;
+	uint32_t preemption_disable_count;
 };
 
 void init();

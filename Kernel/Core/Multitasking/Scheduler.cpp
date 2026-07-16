@@ -3,6 +3,7 @@
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
 #include <Logger/Logger.hpp>
+#include <Utility/IRQSpinlock.hpp>
 
 namespace Multitasking {
 
@@ -11,7 +12,11 @@ void idle_task(void*);
 Scheduler* scheduler;
 Thread* idle_task_thread;
 
+IRQSpinlock threads_lock;
+
 void Scheduler::add_thread(Thread* thread) {
+	IRQSpinlockGuard guard(threads_lock);
+
 	threads.push_back(thread);
 }
 
@@ -24,7 +29,7 @@ void Scheduler::yield() {
 uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 	Thread* old = current;
 
-	if (preemption_disabled) {
+	if (preemption_disable_count > 0) {
 		// FIXME: SMP: this only protects this CPU.
 		// A different CPU may still run another thread. So this does not make an operation magically thread-safe
 
@@ -33,6 +38,9 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 		}
 		return 0;
 	}
+
+	// NOTE: This is lock disables preemption so it needs to be run only after the preemption check
+	IRQSpinlockGuard guard(threads_lock);
 
 	// Logger::log_debug("Saving interrupt rsp %X for thread %d\n", regs, current->id);
 
@@ -107,6 +115,8 @@ void Scheduler::wake(Thread* thread) {
 }
 
 void Scheduler::dump() {
+	IRQSpinlockGuard guard(threads_lock);
+
 	Logger::log_debug("Scheduler dump:\n");
 	Logger::log_debug("\t(idle) %d: %s %s\n", idle_task_thread->id, idle_task_thread->name, thread_state_to_string(idle_task_thread->state));
 	for (size_t i = 0; i < threads.size(); i++) {
