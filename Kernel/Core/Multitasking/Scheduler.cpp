@@ -25,6 +25,9 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 	Thread* old = current;
 
 	if (preemption_disabled) {
+		// FIXME: SMP: this only protects this CPU.
+		// A different CPU may still run another thread. So this does not make an operation magically thread-safe
+
 		if (old->state != ThreadState::Running) {
 			panic("Preemption is disabled but thread %d cannot be scheduled as it is %s.\n", old->id, thread_state_to_string(old->state));
 		}
