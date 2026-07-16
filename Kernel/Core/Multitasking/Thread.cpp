@@ -82,7 +82,7 @@ void thread_entry() {
 	asm volatile("mov %%rsp, %0" : "=r"(rsp));
 
 	Logger::log_debug("thread_entry: Thread %d stack=%X\n", scheduler->current_thread()->id, rsp);
-	Logger::log_debug("thread_entry: About to run call the thread entrypoint at %X\n", scheduler->current_thread()->entry);
+	Logger::log_debug("thread_entry: About to call the thread entrypoint at %X\n", scheduler->current_thread()->entry);
 
 	// Call the thread entry function
 	scheduler->current_thread()->entry(scheduler->current_thread()->arguemnt);
