@@ -130,6 +130,9 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 				Logger::log_debug("VMM:\t Total: %d pages\n", kernel_vmm.get_total_pages());
 				Logger::log_debug("\t\t Free: %d pages\n", kernel_vmm.get_free_pages());
 			}
+			if (scancode == 61) { // F3
+				Multitasking::scheduler->dump();
+			}
 		}
 
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();

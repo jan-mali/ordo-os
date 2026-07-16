@@ -20,6 +20,8 @@ public:
 	void block();
 	void wake(Thread* thread);
 
+	void dump();
+
 	inline Thread* current_thread() {
 		return current;
 	}

@@ -15,6 +15,23 @@ enum class ThreadState {
 	Dead
 };
 
+inline const char* thread_state_to_string(ThreadState state) {
+	switch (state) {
+	case ThreadState::Ready:
+		return "Ready";
+	case ThreadState::Running:
+		return "Running";
+	case ThreadState::Sleeping:
+		return "Sleeping";
+	case ThreadState::Blocked:
+		return "Blocked";
+	case ThreadState::Dead:
+		return "Dead";
+	}
+
+	return "Invalid";
+}
+
 struct Thread {
 	uint64_t id;
 

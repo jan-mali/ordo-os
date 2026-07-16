@@ -95,6 +95,15 @@ void Scheduler::wake(Thread* thread) {
 	thread->state = ThreadState::Ready;
 }
 
+void Scheduler::dump() {
+	Logger::log_debug("Scheduler dump:\n");
+	Logger::log_debug("\t(idle) %d: %s %s\n", idle_task_thread->id, idle_task_thread->name, thread_state_to_string(idle_task_thread->state));
+	for (size_t i = 0; i < threads.size(); i++) {
+		Thread* thread = threads[i];
+		Logger::log_debug("\t%d: %s %s\n", thread->id, thread->name, thread_state_to_string(thread->state));
+	}
+}
+
 void init() {
 	scheduler = new Scheduler();
 
