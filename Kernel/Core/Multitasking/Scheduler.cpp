@@ -104,12 +104,16 @@ void Scheduler::start() {
 
 void Scheduler::block() {
 	current->state = ThreadState::Blocked;
+	yield();
 }
 
 void Scheduler::wake(Thread* thread) {
 	// FIXME: What if the current thread was destroyed before it is meant to wake up?
 	// Then this is a use-after-free
 	// So maybe somehow guarantee that a blocked thread cannot possibly be destroyed?
+
+	if (thread->state != ThreadState::Blocked)
+		return;
 
 	thread->state = ThreadState::Ready;
 }

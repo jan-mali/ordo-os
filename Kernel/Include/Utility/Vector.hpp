@@ -57,6 +57,31 @@ public:
 			size_--;
 	}
 
+	T remove_back() {
+		if (size_ == 0)
+			return T {};
+
+		T value = static_cast<T&&>(data[size_ - 1]);
+		size_--;
+
+		return value;
+	}
+
+	T remove_front() {
+		if (size_ == 0)
+			return T {};
+
+		T value = static_cast<T&&>(data[0]);
+
+		for (size_t i = 1; i < size_; i++) {
+			data[i - 1] = static_cast<T&&>(data[i]);
+		}
+
+		size_--;
+
+		return value;
+	}
+
 	T& operator[](size_t index) {
 		return data[index];
 	}
