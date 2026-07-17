@@ -48,6 +48,9 @@ struct Thread {
 
 	char name[32];
 
+	// TODO: Use this with a properly sorted sleep queue
+	uint64_t wake_time;
+
 	Process* process;
 };
 

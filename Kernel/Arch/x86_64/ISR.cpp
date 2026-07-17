@@ -2,6 +2,7 @@
 #include <Arch/x86_64/PageFault.hpp>
 #include <Arch/x86_64/Registers.hpp>
 #include <Core/ACPI/Interrupts.hpp>
+#include <Core/ACPI/Timer.hpp>
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
@@ -92,6 +93,9 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 
 	if (registers->int_no == 32) {
 		// LAPIC Timer
+
+		ACPI::Timer::monotonic_time_ns += 1000000000ULL / ACPI::Timer::LAPIC_TIMER_HZ;
+
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
 		return Multitasking::scheduler->yield_from_interrupt(registers);
 	}
@@ -132,6 +136,9 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 			}
 			if (scancode == 61) { // F3
 				Multitasking::scheduler->dump();
+			}
+			if (scancode == 62) { // F4
+				Logger::log_debug("Monotonic time is approximately %D milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
 			}
 		}
 

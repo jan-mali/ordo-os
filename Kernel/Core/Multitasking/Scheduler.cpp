@@ -1,4 +1,5 @@
 #include <Arch/x86_64/Interrupts.hpp>
+#include <Core/ACPI/Timer.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
@@ -41,6 +42,8 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 
 	// NOTE: This is lock disables preemption so it needs to be run only after the preemption check
 	IRQSpinlockGuard guard(threads_lock);
+
+	wake_sleeping_threads();
 
 	// Logger::log_debug("Saving interrupt rsp %X for thread %d\n", regs, current->id);
 
@@ -107,13 +110,25 @@ void Scheduler::block() {
 	yield();
 }
 
+void Scheduler::sleep_until(uint64_t wake_time_ns) {
+	current->wake_time = wake_time_ns;
+	current->state = ThreadState::Sleeping;
+	yield();
+}
+
+void Scheduler::sleep_for(uint64_t sleep_for_ns) {
+	sleep_until(ACPI::Timer::monotonic_time_ns + sleep_for_ns);
+}
+
 void Scheduler::wake(Thread* thread) {
 	// FIXME: What if the current thread was destroyed before it is meant to wake up?
 	// Then this is a use-after-free
 	// So maybe somehow guarantee that a blocked thread cannot possibly be destroyed?
 
-	if (thread->state != ThreadState::Blocked)
+	if (thread->state != ThreadState::Blocked && thread->state != ThreadState::Sleeping)
 		return;
+
+	// Logger::log_debug("Waking %s thread %d\n", thread_state_to_string(thread->state), thread->id);
 
 	thread->state = ThreadState::Ready;
 }
@@ -126,6 +141,18 @@ void Scheduler::dump() {
 	for (size_t i = 0; i < threads.size(); i++) {
 		Thread* thread = threads[i];
 		Logger::log_debug("\t%d: %s %s\n", thread->id, thread->name, thread_state_to_string(thread->state));
+	}
+}
+
+void Scheduler::wake_sleeping_threads() {
+	// TODO: Implement a sorted sleep queue
+	uint64_t now = ACPI::Timer::monotonic_time_ns;
+
+	for (size_t i = 0; i < threads.size(); i++) {
+		Thread* thread = threads[i];
+		if (thread->state == ThreadState::Sleeping && now >= thread->wake_time) {
+			wake(thread);
+		}
 	}
 }
 

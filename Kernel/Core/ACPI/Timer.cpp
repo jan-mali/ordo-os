@@ -31,6 +31,8 @@ constexpr uint16_t PIT_DIVISOR = PIT_FREQUENCY / PIT_HZ;
 
 constexpr uint32_t TIMER_VECTOR = 32; // IRQ 32
 
+uint64_t monotonic_time_ns = 0;
+
 static void pit_start_oneshot() {
 	// Channel 0
 	// Access mode: lobyte/hibyte
@@ -92,6 +94,8 @@ void finish_calibration() {
 	lapic.write32(LVT_TIMER, TIMER_VECTOR | LAPIC_TIMER_PERIODIC);
 
 	lapic.write32(INITIAL_COUNT, reload);
+
+	monotonic_time_ns = 0;
 }
 
 }

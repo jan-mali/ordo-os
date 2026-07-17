@@ -21,6 +21,8 @@ public:
 	void start();
 
 	void block();
+	void sleep_until(uint64_t wake_time_ns);
+	void sleep_for(uint64_t sleep_for_ns);
 	void wake(Thread* thread);
 
 	void dump();
@@ -49,6 +51,8 @@ private:
 	Vector<Thread*> threads;
 	Thread* current;
 	uint32_t preemption_disable_count;
+
+	void wake_sleeping_threads();
 };
 
 void init();
