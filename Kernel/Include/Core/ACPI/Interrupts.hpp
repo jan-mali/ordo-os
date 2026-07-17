@@ -86,6 +86,7 @@ class LocalAPIC {
 
 public:
 	void eoi();
+	uint32_t read32(uint32_t offset);
 	void write32(uint32_t offset, uint32_t value);
 
 private:

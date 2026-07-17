@@ -67,6 +67,10 @@ void LocalAPIC::eoi() {
 	write32(0xB0, 0);
 }
 
+uint32_t LocalAPIC::read32(uint32_t offset) {
+	return mmio[offset / sizeof(uint32_t)];
+}
+
 void LocalAPIC::write32(uint32_t offset, uint32_t value) {
 	mmio[offset / sizeof(uint32_t)] = value;
 }
