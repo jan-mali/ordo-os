@@ -21,13 +21,14 @@ struct BAR {
 
 enum class CapabilityID : uint8_t {
 	MSI = 0x05,
+	VendorSpecific = 0x09,
 	MSIX = 0x11
 };
 
 struct Capabability {
 	uint8_t id;
 	uint8_t offset;
-};
+} __attribute__((packed));
 
 struct Device {
 	uint8_t bus;

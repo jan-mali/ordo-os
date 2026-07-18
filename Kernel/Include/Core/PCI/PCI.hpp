@@ -8,5 +8,6 @@ namespace PCI {
 extern Vector<Device> devices;
 
 void enumerate();
+void attach_drivers();
 
 }

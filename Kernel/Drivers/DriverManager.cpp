@@ -1,4 +1,6 @@
 #include <Drivers/DriverManager.hpp>
+#include <Drivers/VirtIO/VirtIOBlockDriver.hpp>
+#include <Logger/Logger.hpp>
 #include <Utility/Vector.hpp>
 
 namespace Drivers {
@@ -14,14 +16,18 @@ void DriverManager::probe_pci(PCI::Device& device) {
 
 	for (size_t i = 0; i < drivers.size(); i++) {
 		if (drivers[i]->probe_pci(device)) {
-			drivers[i]->attach(device);
-			return;
+			bool success = drivers[i]->attach(device);
+			if (success) {
+				return;
+			}
+
+			Logger::log_warning("DriverManager: Failed to attach PCI driver to device %02x:%02x.%d\n", device.bus, device.device, device.function);
 		}
 	}
 }
 
 void register_all_drivers() {
-	// TODO: Register all drivers here
+	DriverManager::register_driver(new VirtIO::VirtIOBlockDriver());
 }
 
 }

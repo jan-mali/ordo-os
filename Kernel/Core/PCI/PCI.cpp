@@ -1,6 +1,7 @@
 #include <Core/PCI/ConfigSpace.hpp>
 #include <Core/PCI/Device.hpp>
 #include <Core/PCI/PCI.hpp>
+#include <Drivers/DriverManager.hpp>
 #include <Logger/Logger.hpp>
 #include <Utility/Vector.hpp>
 
@@ -164,6 +165,12 @@ void enumerate() {
 				devices.push_back(pci_device);
 			}
 		}
+	}
+}
+
+void attach_drivers() {
+	for (size_t i = 0; i < devices.size(); i++) {
+		Drivers::DriverManager::probe_pci(devices[i]);
 	}
 }
 

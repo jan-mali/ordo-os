@@ -174,4 +174,5 @@ void init_stage2(void*) {
 	Drivers::register_all_drivers();
 
 	PCI::enumerate();
+	PCI::attach_drivers();
 }
