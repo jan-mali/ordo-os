@@ -44,7 +44,7 @@ void enumerate() {
 				pci_device.prog_if = prog_if;
 				pci_device.revision_id = revision_id;
 
-				Logger::log_info("- %02X:%02X.%d: vendor=%04X, device=%04X cl:sub:if=%02X:%02X:%02X\n", bus, device, function, vendor, device, class_code, subclass, prog_if);
+				Logger::log_info("- %02X:%02X.%d: vendor=%04X, device=%04X cl:sub:if=%02X:%02X:%02X\n", bus, device, function, vendor, device_id, class_code, subclass, prog_if);
 
 				uint8_t header_type = ConfigurationSpace::read8(bus, device, function, 0xE);
 				pci_device.header_type = header_type;
