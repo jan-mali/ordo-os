@@ -65,8 +65,7 @@ isr_handler_common:
 
     mov rsp, rax
 
-.no_switch
-
+.no_switch:
     pop rax
     pop rbx
     pop rcx
