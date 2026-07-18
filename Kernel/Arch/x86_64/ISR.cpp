@@ -1,3 +1,4 @@
+#include <Arch/x86_64/IDT.hpp>
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/PageFault.hpp>
 #include <Arch/x86_64/Registers.hpp>
@@ -156,6 +157,18 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 		}
 
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
+		return 0;
+	}
+
+	if (registers->int_no >= Interrupts::IDT::FIRST_DYNAMIC_VECTOR && registers->int_no <= Interrupts::IDT::LAST_DYNAMIC_VECTOR) {
+		// Dynamic vectors
+		auto* handler = Interrupts::IDT::dynamic_handlers[registers->int_no - Interrupts::IDT::FIRST_DYNAMIC_VECTOR];
+		if (!handler) {
+			panic("No handler set for dynamic interrupt vector %d.\n", registers->int_no);
+		}
+
+		handler(registers);
+
 		return 0;
 	}
 

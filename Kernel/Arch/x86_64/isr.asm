@@ -34,6 +34,14 @@ init_isr_and_lidt:
 %endrep
 
     load_isr 127, isr_handler_127 ; Scheduler yield
+    load_isr 128, isr_handler_128 ; Possibly future syscall
+
+%assign i 129
+%rep 126
+    ; 126 dynamically allocatable vectors
+    load_isr i, isr_handler_%+i
+%assign i i+1
+%endrep
 
     lidt [rel idtr]
     pop rbx
@@ -144,3 +152,11 @@ isr_handler_noerr i
 %endrep
 
 isr_handler_noerr 127 ; Scheduler yield
+isr_handler_noerr 128 ; Possibly future syscall
+
+; Dynamic vector allocation
+%assign i 129
+%rep 126
+isr_handler_noerr i
+%assign i i+1
+%endrep

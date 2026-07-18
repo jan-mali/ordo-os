@@ -75,5 +75,12 @@ idt:
 times 2 * 79 dq 0 ; 79 empty entries, 0x30-0x7e
 
     idt_gate_intr ; 0x7f 127, Scheduler yield
+    idt_gate_intr ; 0x80 128, Possibly future syscall
+
+%rep 126
+    idt_gate_intr ; 0x81-0xfe, Dynamically allocatable entries
+%endrep
+
+; entry 0xFF is reserved for ACPI
 
 idt_end:
