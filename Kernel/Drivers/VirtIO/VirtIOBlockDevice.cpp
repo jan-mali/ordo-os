@@ -1,6 +1,8 @@
 #include <Drivers/VirtIO/VirtIOBlockDevice.hpp>
 #include <Drivers/VirtIO/VirtIOCapability.hpp>
+#include <Drivers/VirtIO/VirtQueue.hpp>
 #include <Logger/Logger.hpp>
+#include <Logger/kstdio.hpp>
 
 namespace Drivers::VirtIO {
 
@@ -76,10 +78,40 @@ bool VirtIOBlockDevice::initialize() {
 	Logger::log_info("VirtIO: Feature negotation successful.\n");
 
 	// 7. Perform device-specific setup, including discovery of virtqueues for the device, optional per-bus setup, reading and possibly writing the device’s virtio configuration space, and population of virtqueues.
+
+	// Configure the VirtQueues
+
+	uint16_t queue_count = common_config->num_queues;
+	if (queue_count == 0) {
+		Logger::log_error("VirtIO: BlockDevice has no virtqueues\n");
+
+		// Bail politely
+		common_config->device_status |= static_cast<uint8_t>(DeviceStatusFlags::Failed);
+
+		return false;
+	}
+
+	for (int i = 0; i < queue_count; i++) {
+		uint16_t queue_size = common_config->queue_size;
+
+		if (queue_size == 0) {
+			continue;
+		}
+
+		VirtQueue* queue = new VirtQueue();
+		queue->initialize(common_config, i);
+
+		virtqueue = queue;
+
+		break;
+	}
+
+	// TODO: Interrupts
+
 	// 8. Set the DRIVER_OK status bit. At this point the device is “live”.
 
-	// TODO
 	common_config->device_status |= static_cast<uint8_t>(DeviceStatusFlags::Failed);
+
 	return false;
 }
 

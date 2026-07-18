@@ -3,6 +3,7 @@
 #include <Core/PCI/Device.hpp>
 #include <Drivers/BlockDevice.hpp>
 #include <Drivers/VirtIO/VirtIOCapability.hpp>
+#include <Drivers/VirtIO/VirtQueue.hpp>
 #include <cstdint>
 
 namespace Drivers::VirtIO {
@@ -21,6 +22,8 @@ public:
 private:
 	ConfigurationPointers config;
 	PCI::Device* pci_device;
+
+	VirtQueue* virtqueue;
 };
 
 }
