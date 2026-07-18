@@ -6,6 +6,7 @@
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
+#include <Core/Multitasking/Thread.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -64,6 +65,15 @@ static const char* exception_names[] = {
 	"Virtualization Exception",
 	"Control Protection Exception"
 };
+
+void timer_demo(void*) {
+	for (int i = 5; i >= 1; --i) {
+		Logger::log_info("Time left: %d seconds\n", i);
+		Multitasking::scheduler->sleep_for(1'000'000 * 1'000); // 1s
+	}
+
+	Logger::log_info("Time is up!\n");
+}
 
 extern "C" uint64_t isr_handler(Registers* registers) {
 	// TODO: Consolidate Page Fault, Exceptions and Panic into one register & stack dumper
@@ -139,6 +149,9 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 			}
 			if (scancode == 62) { // F4
 				Logger::log_debug("Monotonic time is approximately %D milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
+			}
+			if (scancode == 63) { // F5
+				Multitasking::scheduler->add_thread(Multitasking::create_thread(timer_demo, nullptr, "timer_demo"));
 			}
 		}
 
