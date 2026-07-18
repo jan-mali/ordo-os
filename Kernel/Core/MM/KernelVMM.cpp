@@ -31,7 +31,7 @@ void KernelVMM::init() {
 	Logger::log_info("Total pages: %lld. Total free pages: %lld\n", stats.pages_total, stats.pages_free);
 }
 
-void* KernelVMM::allocate_pages(uint64_t count) {
+void* KernelVMM::allocate_pages(uint64_t count, bool contiguous) {
 	if (!initialized) {
 		panic("KernelVMM: Not yet initialized.\n");
 	}
@@ -49,16 +49,29 @@ void* KernelVMM::allocate_pages(uint64_t count) {
 
 		// Found a viable window
 		if (all_free) {
-			for (uint64_t p = 0; p < count; p++) {
-				bitmap_set(start + p, true);
-
+			if (contiguous) {
 				// Allocate physical pages for the virtual pages
-				uint64_t phys_page = reinterpret_cast<uint64_t>(pmm.alloc(1));
-				Paging::kernel_address_space.map(start * 4096 + p * 4096 + KERNEL_HEAP_START, phys_page, static_cast<uint64_t>(Paging::PageFlags::Writable));
-			}
+				uint64_t phys_page = reinterpret_cast<uint64_t>(pmm.alloc(count));
+				for (uint64_t p = 0; p < count; p++) {
+					bitmap_set(start + p, true);
 
-			// Return the virtual address of the allocated pages
-			return reinterpret_cast<void*>((uint64_t)start * 4096 + KERNEL_HEAP_START);
+					Paging::kernel_address_space.map(start * Paging::PAGE_SIZE + p * Paging::PAGE_SIZE + KERNEL_HEAP_START, phys_page + Paging::PAGE_SIZE * p, static_cast<uint64_t>(Paging::PageFlags::Writable));
+				}
+
+				// Return the virtual address of the allocated pages
+				return reinterpret_cast<void*>((uint64_t)start * Paging::PAGE_SIZE + KERNEL_HEAP_START);
+			} else {
+				for (uint64_t p = 0; p < count; p++) {
+					bitmap_set(start + p, true);
+
+					// Allocate physical pages for the virtual pages
+					uint64_t phys_page = reinterpret_cast<uint64_t>(pmm.alloc(1));
+					Paging::kernel_address_space.map(start * Paging::PAGE_SIZE + p * Paging::PAGE_SIZE + KERNEL_HEAP_START, phys_page, static_cast<uint64_t>(Paging::PageFlags::Writable));
+				}
+
+				// Return the virtual address of the allocated pages
+				return reinterpret_cast<void*>((uint64_t)start * Paging::PAGE_SIZE + KERNEL_HEAP_START);
+			}
 		}
 	}
 

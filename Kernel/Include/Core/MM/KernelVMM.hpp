@@ -14,7 +14,7 @@ class KernelVMM {
 public:
 	void init();
 
-	void* allocate_pages(uint64_t count);
+	void* allocate_pages(uint64_t count, bool contiguous = false);
 	void free_pages(const void* ptr, uint64_t count);
 
 	uint64_t get_total_pages() const { return stats.pages_total; }
