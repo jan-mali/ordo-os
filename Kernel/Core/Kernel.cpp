@@ -1,3 +1,4 @@
+#include <Core/PCI/PCI.hpp>
 #include <Arch/x86_64/GDT.hpp>
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
@@ -168,4 +169,6 @@ extern "C" void kmain() {
 
 void init_stage2(void*) {
 	Logger::log_info("Continuing boot from init_stage2! :)\n");
+
+	PCI::enumerate();
 }
