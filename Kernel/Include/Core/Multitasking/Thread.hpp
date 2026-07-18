@@ -38,7 +38,7 @@ struct Thread {
 	uint64_t interrupt_rsp;
 
 	void (*entry)(void*);
-	void* arguemnt;
+	void* argument;
 
 	void* stack_base;
 	void* stack_top;

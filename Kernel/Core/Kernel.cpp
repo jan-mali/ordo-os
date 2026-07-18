@@ -8,6 +8,7 @@
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/MM/Paging.hpp>
+#include <Core/Multitasking/FinalizerTask.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
@@ -155,6 +156,7 @@ extern "C" void kmain() {
 	ACPI::Timer::init();
 
 	Multitasking::init();
+	Multitasking::FinalizerTask::start();
 
 	Multitasking::scheduler->add_thread(Multitasking::create_thread(init_stage2, nullptr, "init_stage2"));
 

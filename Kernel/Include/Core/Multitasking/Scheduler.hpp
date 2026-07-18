@@ -2,9 +2,11 @@
 
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Arch/x86_64/Registers.hpp>
+#include <Core/Multitasking/FinalizerTask.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
 #include <Logger/Logger.hpp>
+#include <Utility/IRQSpinlock.hpp>
 #include <Utility/Vector.hpp>
 
 namespace Multitasking {
@@ -12,6 +14,8 @@ namespace Multitasking {
 extern "C" void restore_interrupt_context(uint64_t rsp);
 
 class Scheduler {
+	friend class FinalizerTask;
+
 public:
 	void add_thread(Thread* thread);
 
@@ -51,6 +55,8 @@ private:
 	Vector<Thread*> threads;
 	Thread* current;
 	uint32_t preemption_disable_count;
+
+	IRQSpinlock threads_lock;
 
 	void wake_sleeping_threads();
 };

@@ -1,4 +1,5 @@
 #include <Core/MM/KernelVMM.hpp>
+#include <Core/MM/Paging.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
@@ -32,8 +33,8 @@ Thread* create_thread(void (*entry)(void*), void* argument, const char* name) {
 
 	thread->stack_base = stack;
 	// FIXME: Use Paging::PAGE_SIZE
-	thread->stack_top = stack + STACK_PAGES * 4096;
-	thread->stack_size = STACK_PAGES * 4096;
+	thread->stack_top = stack + STACK_PAGES * Paging::PAGE_SIZE;
+	thread->stack_size = STACK_PAGES * Paging::PAGE_SIZE;
 
 	thread->state = Multitasking::ThreadState::Ready;
 
@@ -72,7 +73,7 @@ Thread* create_thread(void (*entry)(void*), void* argument, const char* name) {
 	thread->interrupt_rsp = reinterpret_cast<uint64_t>(rsp);
 
 	thread->entry = entry;
-	thread->arguemnt = argument;
+	thread->argument = argument;
 
 	return thread;
 }
@@ -85,7 +86,7 @@ void thread_entry() {
 	Logger::log_debug("thread_entry: About to call the thread entrypoint at %X\n", scheduler->current_thread()->entry);
 
 	// Call the thread entry function
-	scheduler->current_thread()->entry(scheduler->current_thread()->arguemnt);
+	scheduler->current_thread()->entry(scheduler->current_thread()->argument);
 
 	// If we returned, the thread should die
 	scheduler->current_thread()->state = ThreadState::Dead;

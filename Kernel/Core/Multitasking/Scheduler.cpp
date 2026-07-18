@@ -13,8 +13,6 @@ void idle_task(void*);
 Scheduler* scheduler;
 Thread* idle_task_thread;
 
-IRQSpinlock threads_lock;
-
 void Scheduler::add_thread(Thread* thread) {
 	IRQSpinlockGuard guard(threads_lock);
 

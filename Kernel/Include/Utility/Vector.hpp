@@ -82,6 +82,32 @@ public:
 		return value;
 	}
 
+	T remove_index(size_t index) {
+		if (index >= size_)
+			return T {};
+
+		T value = static_cast<T&&>(data[index]);
+
+		for (size_t i = index + 1; i < size_; i++) {
+			data[i - 1] = static_cast<T&&>(data[i]);
+		}
+
+		size_--;
+
+		return value;
+	}
+
+	void erase(size_t index) {
+		if (index >= size_)
+			return;
+
+		for (size_t i = index + 1; i < size_; i++) {
+			data[i - 1] = static_cast<T&&>(data[i]);
+		}
+
+		size_--;
+	}
+
 	T& operator[](size_t index) {
 		return data[index];
 	}
@@ -125,7 +151,7 @@ private:
 		T* new_data = new T[new_capacity];
 
 		for (size_t i = 0; i < size_; i++) {
-			new_data[i] = data[i];
+			new_data[i] = static_cast<T&&>(data[i]);
 		}
 
 		delete[] data;
