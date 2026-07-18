@@ -25,11 +25,7 @@ static void stack_trace() {
 	Logger::log_critical("Stack trace:\n");
 
 	for (int i = 0; frame && i < MAX_STACK_UNWIND_LENGTH; i++) {
-		Logger::log_critical(
-			"\t#%d %X\n",
-			i,
-			frame->rip
-		);
+		Logger::log_critical("\t#%d %016llX\n", i, frame->rip);
 
 		if (frame->rbp <= frame)
 			break;
@@ -41,7 +37,7 @@ static void stack_trace() {
 
 	for (int i = 0; frame2 && i < MAX_STACK_UNWIND_LENGTH; i++) {
 		Logger::kprintf(
-			" %X",
+			" %016llX",
 			frame2->rip
 		);
 

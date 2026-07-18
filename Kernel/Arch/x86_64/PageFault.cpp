@@ -29,12 +29,12 @@ void handle_page_fault(Registers* regs) {
 		err & 4 ? "user" : "kernel"
 	);
 
-	Logger::log_critical("CR2  = 0x%X (fault address)\n", cr2);
-	Logger::log_critical("CR3  = 0x%X (PML4 base)\n", cr3);
+	Logger::log_critical("CR2  = %016llX (fault address)\n", cr2);
+	Logger::log_critical("CR3  = %016llX (PML4 base)\n", cr3);
 
-	Logger::log_critical("RIP=%X\tRSP=%X\n", regs->frame.rip, regs->frame.rsp);
-	Logger::log_critical("RAX=%X\tRBX=%X\n", regs->rax, regs->rbx);
-	Logger::log_critical("RCX=%X\tRDX=%X\n", regs->rcx, regs->rdx);
+	Logger::log_critical("RIP=%016llX\tRSP=%016llX\n", regs->frame.rip, regs->frame.rsp);
+	Logger::log_critical("RAX=%016llX\tRBX=%016llX\n", regs->rax, regs->rbx);
+	Logger::log_critical("RCX=%016llX\tRDX=%016llX\n", regs->rcx, regs->rdx);
 
 	// Right now we don't have any way of recovering
 	panic("Page Fault in kernel code.\n");

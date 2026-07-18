@@ -130,7 +130,7 @@ InterruptManager::InterruptManager(MADT::MADTHeader* madt) {
 			uint32_t register_data = ioapic.read32(0x01);
 			ioapic.redirection_count = (register_data >> 16) & 0xFF;
 
-			Logger::log_info("I/O APIC: APIC %d, PA %X, GSI Base %d, Redirection Count %d\n", ioapic.id, ioapic.physical_address, ioapic.gsi_base, ioapic.redirection_count);
+			Logger::log_info("I/O APIC: APIC %d, PA %016llX, GSI Base %d, Redirection Count %d\n", ioapic.id, ioapic.physical_address, ioapic.gsi_base, ioapic.redirection_count);
 
 			break;
 		}

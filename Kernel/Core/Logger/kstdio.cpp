@@ -16,96 +16,129 @@ static void print_str(const char* str) {
 	text_console.write(str);
 }
 
-static void print_hex32(uint32_t value) {
-	uint32_t divisor = 0x10000000;
-	while (divisor > 0) {
-		uint32_t digit = value / divisor;
-		if (digit >= 10) {
-			putc('A' + digit - 10);
-		} else {
-			putc('0' + digit);
-		}
-		value -= digit * divisor;
-		divisor /= 0x10;
+static void print_padding(char c, int count) {
+	while (count-- > 0)
+		putc(c);
+}
+
+static int u64_length(uint64_t value) {
+	int length = 1;
+
+	while (value >= 10) {
+		value /= 10;
+		length++;
 	}
+
+	return length;
 }
 
-static void print_hex64(uint64_t value) {
-	uint32_t high = value >> 32;
-	uint32_t low = value & 0xFFFFFFFF;
-	print_hex32(high);
-	print_hex32(low);
+static int hex_length(uint64_t value) {
+	int length = 1;
+
+	while (value >= 0x10) {
+		value >>= 4;
+		length++;
+	}
+
+	return length;
 }
 
-static void print_sdec32(int32_t value) {
-	char buffer[12]; // enough for -2147483648\0
+static void print_hex_raw(uint64_t value, bool uppercase) {
+	char buffer[16];
 	int i = 0;
 
-	// Handle negative numbers
-	if (value < 0) {
-		putc('-');
-		// Special case for INT32_MIN (−2147483648)
-		if (value == INT32_MIN) {
-			// INT32_MIN = -2147483648 → print manually
-			const char* minstr = "2147483648";
-			while (*minstr)
-				putc(*minstr++);
-			return;
-		}
-		value = -value;
-	}
-
-	// Handle 0 explicitly
 	if (value == 0) {
 		putc('0');
 		return;
 	}
 
-	// Convert to string in reverse order
 	while (value > 0) {
-		buffer[i++] = '0' + (value % 10);
-		value /= 10;
+		uint8_t digit = value & 0xF;
+
+		if (digit < 10)
+			buffer[i++] = '0' + digit;
+		else if (uppercase)
+			buffer[i++] = 'A' + digit - 10;
+		else
+			buffer[i++] = 'a' + digit - 10;
+
+		value >>= 4;
 	}
 
-	// Print digits in correct order
-	while (i-- > 0) {
+	while (i-- > 0)
 		putc(buffer[i]);
-	}
 }
 
-static void print_sdec64(int64_t value) {
-	char buffer[21]; // enough for -9223372036854775808\0
+static void print_dec_raw(uint64_t value) {
+	char buffer[20];
 	int i = 0;
 
-	// Handle negative numbers
-	if (value < 0) {
-		putc('-');
-		// Special case for INT64_MIN (−9223372036854775808)
-		if (value == INT64_MIN) {
-			const char* minstr = "9223372036854775808";
-			while (*minstr)
-				putc(*minstr++);
-			return;
-		}
-		value = -value;
-	}
-
-	// Handle 0 explicitly
 	if (value == 0) {
 		putc('0');
 		return;
 	}
 
-	// Convert to string in reverse order
 	while (value > 0) {
 		buffer[i++] = '0' + (value % 10);
 		value /= 10;
 	}
 
-	// Print digits in correct order
-	while (i-- > 0) {
+	while (i-- > 0)
 		putc(buffer[i]);
+}
+
+static void print_hex(uint64_t value, int width, bool zero_pad, bool uppercase) {
+	int length = hex_length(value);
+
+	if (zero_pad)
+		print_padding('0', width - length);
+	else
+		print_padding(' ', width - length);
+
+	print_hex_raw(value, uppercase);
+}
+
+static void print_unsigned(uint64_t value, int width, bool zero_pad) {
+	int length = u64_length(value);
+
+	if (zero_pad)
+		print_padding('0', width - length);
+	else
+		print_padding(' ', width - length);
+
+	print_dec_raw(value);
+}
+
+static void print_signed(int64_t value, int width, bool zero_pad) {
+	bool negative = value < 0;
+
+	uint64_t absolute;
+
+	if (negative) {
+		if (value == INT64_MIN)
+			absolute = 9223372036854775808ULL;
+		else
+			absolute = -value;
+	} else {
+		absolute = value;
 	}
+
+	int length = u64_length(absolute) + (negative ? 1 : 0);
+
+	if (zero_pad && negative) {
+		putc('-');
+		print_padding('0', width - length);
+		print_dec_raw(absolute);
+		return;
+	}
+
+	if (!zero_pad)
+		print_padding(' ', width - length);
+
+	if (negative)
+		putc('-');
+
+	print_dec_raw(absolute);
 }
 
 int kprintf(const char* fmt, ...) {
@@ -122,56 +155,147 @@ int kprintf(const char* fmt, ...) {
 int kvprintf(const char* fmt, va_list args) {
 	uint32_t len = strlen(fmt);
 
-	bool special = false;
-
 	for (uint32_t i = 0; i < len; i++) {
 		char c = fmt[i];
-		if (c == '%') {
-			if (special) {
-				putc(c);
-			} else {
-				special = true;
-				continue;
-			}
+
+		if (c != '%') {
+			putc(c);
+			continue;
 		}
 
-		if (special) {
-			special = false;
+		i++;
 
-			if (c == 's') {
-				const char* value = va_arg(args, const char*);
-				print_str(value ? value : "(null)");
-				continue;
-			}
-
-			if (c == 'X') {
-				uint64_t value = va_arg(args, uint64_t);
-				print_hex64(value);
-				continue;
-			}
-
-			if (c == 'x') {
-				uint32_t value = va_arg(args, uint32_t);
-				print_hex32(value);
-				continue;
-			}
-
-			if (c == 'D') {
-				int64_t value = va_arg(args, int64_t);
-				print_sdec64(value);
-				continue;
-			}
-
-			if (c == 'd') {
-				int32_t value = va_arg(args, int32_t);
-				print_sdec32(value);
-				continue;
-			}
-
+		if (fmt[i] == '%') {
 			putc('%');
+			continue;
 		}
 
-		putc(c);
+		bool zero_pad = false;
+		bool left_align = false;
+		int width = 0;
+
+		if (fmt[i] == '0') {
+			zero_pad = true;
+			i++;
+		}
+
+		if (fmt[i] == '-') {
+			left_align = true;
+			zero_pad = false;
+			i++;
+		}
+
+		while (fmt[i] >= '0' && fmt[i] <= '9') {
+			width = width * 10 + (fmt[i] - '0');
+			i++;
+		}
+
+		enum {
+			NONE,
+			HH,
+			H,
+			L,
+			LL
+		} modifier = NONE;
+
+		if (fmt[i] == 'h') {
+			i++;
+
+			if (fmt[i] == 'h')
+				modifier = HH;
+			else {
+				modifier = H;
+				i--;
+			}
+
+			i++;
+		} else if (fmt[i] == 'l') {
+			i++;
+
+			if (fmt[i] == 'l')
+				modifier = LL;
+			else {
+				modifier = L;
+				i--;
+			}
+
+			i++;
+		}
+
+		c = fmt[i];
+
+		switch (c) {
+
+		case 's': {
+			const char* value = va_arg(args, const char*);
+			value = value ? value : "(null)";
+
+			int length = strlen(value);
+
+			if (!left_align)
+				print_padding(' ', width - length);
+
+			print_str(value);
+
+			if (left_align)
+				print_padding(' ', width - length);
+
+			break;
+		}
+
+		case 'p': {
+			void* value = va_arg(args, void*);
+
+			print_hex(reinterpret_cast<uint64_t>(value), 16, true, true);
+
+			break;
+		}
+
+		case 'x':
+		case 'X': {
+			uint64_t value;
+
+			if (modifier == LL || modifier == L)
+				value = va_arg(args, uint64_t);
+			else
+				value = va_arg(args, uint32_t);
+
+			print_hex(value, width, zero_pad, c == 'X');
+
+			break;
+		}
+
+		case 'd': {
+			int64_t value;
+
+			if (modifier == LL || modifier == L)
+				value = va_arg(args, int64_t);
+			else
+				value = va_arg(args, int32_t);
+
+			print_signed(value, width, zero_pad);
+
+			break;
+		}
+
+		case 'u': {
+			uint64_t value;
+
+			if (modifier == LL || modifier == L)
+				value = va_arg(args, uint64_t);
+			else
+				value = va_arg(args, uint32_t);
+
+			print_unsigned(value, width, zero_pad);
+
+			break;
+		}
+
+		default:
+			putc('%');
+			putc(c);
+			break;
+		}
 	}
 
 	return 0;

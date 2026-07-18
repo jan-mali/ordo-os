@@ -28,7 +28,7 @@ void KernelVMM::init() {
 	initialized = true;
 
 	Logger::log_info("KernelVMM is intialized.\n");
-	Logger::log_info("Total pages: %D. Total free pages: %D\n", stats.pages_total, stats.pages_free);
+	Logger::log_info("Total pages: %lld. Total free pages: %lld\n", stats.pages_total, stats.pages_free);
 }
 
 void* KernelVMM::allocate_pages(uint64_t count) {
@@ -62,7 +62,7 @@ void* KernelVMM::allocate_pages(uint64_t count) {
 		}
 	}
 
-	panic("KernelVMM: Out of memory! Unable to allocate %D contiguous pages.\n", count);
+	panic("KernelVMM: Out of memory! Unable to allocate %lld contiguous pages.\n", count);
 }
 
 void KernelVMM::free_pages(const void* ptr, uint64_t count) {
@@ -75,7 +75,7 @@ void KernelVMM::free_pages(const void* ptr, uint64_t count) {
 	uint64_t address = reinterpret_cast<uint64_t>(ptr);
 
 	if (address < KERNEL_HEAP_START || address >= KERNEL_HEAP_END || (address - KERNEL_HEAP_START) % 4096 != 0) {
-		panic("KernelVMM: Invalid free address %X.\n", ptr);
+		panic("KernelVMM: Invalid free address %p.\n", ptr);
 	}
 
 	if (count == 0)
@@ -85,7 +85,7 @@ void KernelVMM::free_pages(const void* ptr, uint64_t count) {
 
 	for (uint64_t p = 0; p < count; p++) {
 		if (!bitmap.get(start_page + p)) {
-			panic("KernelVMM: Possible double free of virtual kernel heap address %X.\n", ptr);
+			panic("KernelVMM: Possible double free of virtual kernel heap address %p.\n", ptr);
 		}
 	}
 

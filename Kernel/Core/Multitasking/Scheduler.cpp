@@ -43,7 +43,7 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 
 	wake_sleeping_threads();
 
-	// Logger::log_debug("Saving interrupt rsp %X for thread %d\n", regs, current->id);
+	// Logger::log_debug("Saving interrupt rsp %016llX for thread %d\n", regs, current->id);
 
 	// Save the interrupted thread's stack
 	old->interrupt_rsp = reinterpret_cast<uint64_t>(regs);
@@ -80,7 +80,7 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 	current = next;
 	thread_index = next_index;
 
-	// Logger::log_debug("About to schedule thread %d, rsp=%X\n", current->id, current->interrupt_rsp);
+	// Logger::log_debug("About to schedule thread %d, rsp=%016llX\n", current->id, current->interrupt_rsp);
 
 	return next->interrupt_rsp;
 }

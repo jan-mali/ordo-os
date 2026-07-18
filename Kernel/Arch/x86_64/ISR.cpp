@@ -90,11 +90,11 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 			Logger::kprintf(" - %s\n", exception_names[registers->int_no]);
 		}
 
-		Logger::log_critical("Error Code: %X\n", registers->err_code);
+		Logger::log_critical("Error Code: %016llX\n", registers->err_code);
 
-		Logger::log_critical("RIP=%X\tRSP=%X\n", registers->frame.rip, registers->frame.rsp);
-		Logger::log_critical("RAX=%X\tRBX=%X\n", registers->rax, registers->rbx);
-		Logger::log_critical("RCX=%X\tRDX=%X\n", registers->rcx, registers->rdx);
+		Logger::log_critical("RIP=%016llX\tRSP=%016llX\n", registers->frame.rip, registers->frame.rsp);
+		Logger::log_critical("RAX=%016llX\tRBX=%016llX\n", registers->rax, registers->rbx);
+		Logger::log_critical("RCX=%016llX\tRDX=%016llX\n", registers->rcx, registers->rdx);
 
 		for (;;) {
 			asm volatile("cli; hlt");
@@ -148,7 +148,7 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 				Multitasking::scheduler->dump();
 			}
 			if (scancode == 62) { // F4
-				Logger::log_debug("Monotonic time is approximately %D milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
+				Logger::log_debug("Monotonic time is approximately %lld milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
 			}
 			if (scancode == 63) { // F5
 				Multitasking::scheduler->add_thread(Multitasking::create_thread(timer_demo, nullptr, "timer_demo"));

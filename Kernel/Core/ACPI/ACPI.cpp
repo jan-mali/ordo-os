@@ -77,7 +77,7 @@ void init(limine_rsdp_response* rsdp_response) {
 		panic("The RSDP checksum is incorrect.\n");
 	}
 
-	Logger::log_info("ACPI: RSDP with revision %d was found at address %X.\n", xsdp->revision, &xsdp);
+	Logger::log_info("ACPI: RSDP with revision %d was found at address %p.\n", xsdp->revision, &xsdp);
 
 	bool failure = false;
 	if (xsdp->revision == 2) {
@@ -171,7 +171,7 @@ static bool parse_root_entry(uint64_t entry) {
 	displayed_oem_id[6] = 0;
 	displayed_oem_table_id[7] = 0;
 
-	Logger::log_info("- 0x%X: %s rev. %d, OEM: %s rev. %d, OEM Table ID: %s", entry, displayed_signature, entry_header->revision, displayed_oem_id, entry_header->oem_revision, displayed_oem_table_id);
+	Logger::log_info("- 0x%016llX: %s rev. %d, OEM: %s rev. %d, OEM Table ID: %s", entry, displayed_signature, entry_header->revision, displayed_oem_id, entry_header->oem_revision, displayed_oem_table_id);
 
 	if (!entry_header->checksum_correct()) {
 		Logger::kprintf(" - invalid.\n");

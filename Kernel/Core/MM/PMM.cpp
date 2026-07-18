@@ -38,7 +38,7 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 
 	hhdm_offset = hhdm->offset;
 
-	Logger::log_info("HHDM offset is %X.\n", hhdm_offset);
+	Logger::log_info("HHDM offset is %016llX.\n", hhdm_offset);
 
 	uint64_t free_memory = 0;
 
@@ -55,7 +55,7 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 			as_size = entry->base + entry->length;
 		}
 
-		Logger::log_info("\tbase=%X, length=%X, type=%d", entry->base, entry->length, entry->type);
+		Logger::log_info("\tbase=%016llX, length=%016llX, type=%d", entry->base, entry->length, entry->type);
 		Logger::kprintf("\t %d KiB %s\n", entry->length / 1024, memmap_entry_types[entry->type]);
 
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
@@ -68,7 +68,7 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 	}
 
 	Logger::log_info("Free memory: %d KiB\n", free_memory / 1024);
-	Logger::log_info("Largest contiguous block is %d KiB at 0x%X\n", largest_cont_size / 1024, largest_cont_at);
+	Logger::log_info("Largest contiguous block is %d KiB at 0x%016llX\n", largest_cont_size / 1024, largest_cont_at);
 
 	Logger::log_info("The Address Space is %d KiB large, this is equivalent to:\n", as_size / 1024);
 
@@ -83,7 +83,7 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 	Logger::log_info("\t- %d PMM bitmap pages\n", pmm_bitmap_pages);
 
 	if (largest_cont_size < pmm_bitmap_bytes) {
-		panic("PMM: Largest contiguous block is too small to fit the bitmap. (%D B < %D B)\n", largest_cont_size, pmm_bitmap_bytes);
+		panic("PMM: Largest contiguous block is too small to fit the bitmap. (%lld B < %lld B)\n", largest_cont_size, pmm_bitmap_bytes);
 	}
 
 	bitmap.init(reinterpret_cast<uint8_t*>(hhdm_offset + largest_cont_at), pmm_bitmap_bytes);
@@ -108,7 +108,7 @@ void PMM::init(limine_memmap_response* memmap, limine_hhdm_response* hhdm) {
 	initialized = true;
 
 	Logger::log_info("PMM is intialized.\n");
-	Logger::log_info("Total usable pages: %D. Total free pages: %D\n", stats.pages_total, stats.pages_free);
+	Logger::log_info("Total usable pages: %lld. Total free pages: %lld\n", stats.pages_total, stats.pages_free);
 }
 
 void* PMM::alloc(uint64_t count) {
@@ -136,7 +136,7 @@ void* PMM::alloc(uint64_t count) {
 		}
 	}
 
-	panic("PMM: Out of memory! Unable to allocate %D contiguous pages.\n", count);
+	panic("PMM: Out of memory! Unable to allocate %lld contiguous pages.\n", count);
 }
 
 void PMM::free(const void* ptr, uint64_t count) {
@@ -153,7 +153,7 @@ void PMM::free(const void* ptr, uint64_t count) {
 
 	for (uint64_t p = 0; p < count; p++) {
 		if (!bitmap.get(start_page + p)) {
-			panic("PMM: Possible double free of physical page %X.\n", start_page + p);
+			panic("PMM: Possible double free of physical page %016llX.\n", start_page + p);
 		}
 	}
 

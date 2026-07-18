@@ -1,6 +1,6 @@
-#include <Core/PCI/PCI.hpp>
 #include <Core/PCI/ConfigSpace.hpp>
 #include <Core/PCI/Device.hpp>
+#include <Core/PCI/PCI.hpp>
 #include <Logger/Logger.hpp>
 #include <Utility/Vector.hpp>
 
@@ -28,7 +28,7 @@ void enumerate() {
 
 				devices.push_back({ .bus = static_cast<uint8_t>(bus), .device = static_cast<uint8_t>(device), .function = static_cast<uint8_t>(function), .vendor = vendor, .device_id = device_id, .class_code = class_code, .subclass = subclass, .prog_if = prog_if });
 
-				Logger::log_info("- %d:%d.%d: v:d=%x cl:sub:if=%d:%d:%d\n", bus, device, function, static_cast<uint32_t>(vendor) << 16 | device_id, class_code, subclass, prog_if);
+				Logger::log_info("- %02X:%02X.%d: vendor=%04X, device=%04X cl:sub:if=%02X:%02X:%02X\n", bus, device, function, vendor, device, class_code, subclass, prog_if);
 			}
 		}
 	}

@@ -1,4 +1,3 @@
-#include <Core/PCI/PCI.hpp>
 #include <Arch/x86_64/GDT.hpp>
 #include <Arch/x86_64/IO.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
@@ -12,6 +11,7 @@
 #include <Core/Multitasking/FinalizerTask.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
+#include <Core/PCI/PCI.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
