@@ -4,12 +4,18 @@
 
 namespace Drivers::VirtIO {
 
-bool VirtIOBlockDevice::read(uint64_t lba, uint64_t count, uint8_t buffer) {
+bool VirtIOBlockDevice::read(uint64_t lba, uint64_t count, uint8_t* buffer) {
+	(void)lba;
+	(void)count;
+	(void)buffer;
 	// TODO
 	return false;
 }
 
-bool VirtIOBlockDevice::write(uint64_t lba, uint64_t count, uint8_t buffer) {
+bool VirtIOBlockDevice::write(uint64_t lba, uint64_t count, uint8_t* buffer) {
+	(void)lba;
+	(void)count;
+	(void)buffer;
 	// TODO
 	return false;
 }

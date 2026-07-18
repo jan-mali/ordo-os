@@ -13,8 +13,8 @@ public:
 		: config(config)
 		, pci_device(pci_device) {}
 
-	bool read(uint64_t lba, uint64_t count, uint8_t buffer) override;
-	bool write(uint64_t lba, uint64_t count, uint8_t buffer) override;
+	bool read(uint64_t lba, uint64_t count, uint8_t* buffer) override;
+	bool write(uint64_t lba, uint64_t count, uint8_t* buffer) override;
 
 	bool initialize();
 
