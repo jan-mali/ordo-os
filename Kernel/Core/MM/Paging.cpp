@@ -1,3 +1,4 @@
+#include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/MM/Paging.hpp>
 #include <Core/Panic.hpp>
@@ -109,6 +110,33 @@ void AddressSpace::unmap(uint64_t virt) {
 
 bool AddressSpace::map_mmio_to_hhdm(uint64_t phys) {
 	return map(pmm.translate_to_hhdm(phys), phys, static_cast<uint64_t>(PageFlags::Writable) | static_cast<uint64_t>(PageFlags::PCD) | static_cast<uint64_t>(PageFlags::PWT) | static_cast<uint64_t>(PageFlags::NX));
+}
+
+bool AddressSpace::map_pci_bar_to_hhdm(uint64_t address, uint64_t size) {
+	uint64_t virt = pmm.get_hhdm_offset() + address;
+
+	// Make sure the HHDM mapping does not collide with the kernel heap
+	if (virt + size < virt) {
+		panic("PCI BAR: address overflow\n");
+	}
+
+	if (virt < KERNEL_HEAP_START && virt + size > KERNEL_HEAP_START) {
+		panic("PCI BAR overlaps kernel heap\n");
+	}
+
+	uint64_t aligned_phys = address & ~0xFFF;
+	uint64_t aligned_virt = virt & ~0xFFF;
+
+	uint64_t offset = address & 0xFFF;
+	uint64_t pages = (offset + size + 0xFFF) / 0x1000;
+
+	for (uint64_t i = 0; i < pages; i++) {
+		if (!map(aligned_virt + (i * 0x1000), aligned_phys + (i * 0x1000), static_cast<uint64_t>(PageFlags::Writable) | static_cast<uint64_t>(PageFlags::PCD) | static_cast<uint64_t>(PageFlags::PWT) | static_cast<uint64_t>(PageFlags::NX))) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool AddressSpace::is_mapped(uint64_t virt) const {

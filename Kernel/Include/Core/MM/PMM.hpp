@@ -18,6 +18,8 @@ public:
 		return phys + hhdm_offset;
 	}
 
+	uint64_t get_hhdm_offset() const { return hhdm_offset; }
+
 private:
 	void bitmap_set(uint64_t page, bool used);
 	void bitmap_set_range(uint64_t base, uint64_t length, bool used);

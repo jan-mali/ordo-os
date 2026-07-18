@@ -36,6 +36,7 @@ public:
 	void unmap(uint64_t virt);
 
 	bool map_mmio_to_hhdm(uint64_t phys);
+	bool map_pci_bar_to_hhdm(uint64_t address, uint64_t size);
 
 	bool is_mapped(uint64_t virt) const;
 	uint64_t flags(uint64_t virt) const;

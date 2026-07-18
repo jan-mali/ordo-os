@@ -34,6 +34,8 @@ struct Device {
 	uint8_t header_type;
 
 	BAR bars[6];
+
+	void* map_bar(int bar_number);
 };
 
 }
