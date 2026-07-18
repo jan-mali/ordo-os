@@ -14,6 +14,7 @@
 #include <Core/PCI/PCI.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
+#include <Drivers/DriverManager.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 #include <cstddef>
@@ -169,6 +170,8 @@ extern "C" void kmain() {
 
 void init_stage2(void*) {
 	Logger::log_info("Continuing boot from init_stage2! :)\n");
+
+	Drivers::register_all_drivers();
 
 	PCI::enumerate();
 }
