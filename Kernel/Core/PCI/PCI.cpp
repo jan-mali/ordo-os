@@ -29,6 +29,7 @@ void enumerate() {
 
 				uint16_t device_id = ConfigurationSpace::read16(bus, device, function, 0x2);
 
+				uint8_t revision_id = ConfigurationSpace::read8(bus, device, function, 0x8);
 				uint8_t prog_if = ConfigurationSpace::read8(bus, device, function, 0x9);
 				uint8_t subclass = ConfigurationSpace::read8(bus, device, function, 0xA);
 				uint8_t class_code = ConfigurationSpace::read8(bus, device, function, 0xB);
@@ -41,6 +42,7 @@ void enumerate() {
 				pci_device.class_code = class_code;
 				pci_device.subclass = subclass;
 				pci_device.prog_if = prog_if;
+				pci_device.revision_id = revision_id;
 
 				Logger::log_info("- %02X:%02X.%d: vendor=%04X, device=%04X cl:sub:if=%02X:%02X:%02X\n", bus, device, function, vendor, device, class_code, subclass, prog_if);
 
