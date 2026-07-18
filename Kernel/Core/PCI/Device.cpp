@@ -23,4 +23,18 @@ void* Device::map_bar(int bar_number) {
 	}
 }
 
+uint8_t Device::capability_offset(CapabilityID id) {
+	for (size_t i = 0; i < capabilities.size(); i++) {
+		if (capabilities[i].id == static_cast<uint8_t>(id)) {
+			return capabilities[i].offset;
+		}
+	}
+
+	return 0;
+}
+
+bool Device::has_capability(CapabilityID id) {
+	return capability_offset(id);
+}
+
 }

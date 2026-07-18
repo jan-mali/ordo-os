@@ -14,10 +14,6 @@ public:
 		delete[] data;
 	}
 
-	// Copy disabled for now (kernel simplicity)
-	Vector(const Vector&) = delete;
-	Vector& operator=(const Vector&) = delete;
-
 	// Move constructor
 	Vector(Vector&& other)
 		: data(other.data)
@@ -40,6 +36,42 @@ public:
 			other.data = nullptr;
 			other.size_ = 0;
 			other.capacity_ = 0;
+		}
+
+		return *this;
+	}
+
+	// Copy constructor
+	Vector(const Vector& other)
+		: data(nullptr)
+		, size_(other.size_)
+		, capacity_(other.capacity_) {
+
+		if (capacity_ > 0) {
+			data = new T[capacity_];
+
+			for (size_t i = 0; i < size_; i++) {
+				data[i] = other.data[i];
+			}
+		}
+	}
+
+	// Copy assignment operator
+	Vector& operator=(const Vector& other) {
+		if (this != &other) {
+			delete[] data;
+
+			data = nullptr;
+			size_ = other.size_;
+			capacity_ = other.capacity_;
+
+			if (capacity_ > 0) {
+				data = new T[capacity_];
+
+				for (size_t i = 0; i < size_; i++) {
+					data[i] = other.data[i];
+				}
+			}
 		}
 
 		return *this;

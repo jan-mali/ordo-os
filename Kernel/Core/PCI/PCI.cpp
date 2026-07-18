@@ -138,6 +138,27 @@ void enumerate() {
 
 					// Restore the command register to original settings
 					ConfigurationSpace::write16(bus, device, function, 0x04, command);
+
+					uint16_t status = ConfigurationSpace::read16(bus, device, function, 0x06);
+
+					if (status & (1 << 4)) {
+						uint8_t capability = ConfigurationSpace::read8(bus, device, function, 0x34);
+
+						// This is a safety check
+						uint8_t capability_count = 0;
+
+						while (capability != 0 && capability_count < 64) {
+							capability_count++;
+							uint8_t id = ConfigurationSpace::read8(bus, device, function, capability);
+							uint8_t next = ConfigurationSpace::read8(bus, device, function, capability + 1);
+
+							pci_device.capabilities.push_back({ .id = id, .offset = capability });
+
+							Logger::log_info("           Capability: ID=0x%02X offset=0x%02X\n", id, capability);
+
+							capability = next;
+						}
+					}
 				}
 
 				devices.push_back(pci_device);

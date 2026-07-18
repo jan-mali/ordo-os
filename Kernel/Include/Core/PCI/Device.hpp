@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Utility/Vector.hpp>
 #include <stdint.h>
 
 namespace PCI {
@@ -18,6 +19,16 @@ struct BAR {
 	uint64_t size;
 };
 
+enum class CapabilityID : uint8_t {
+	MSI = 0x05,
+	MSIX = 0x11
+};
+
+struct Capabability {
+	uint8_t id;
+	uint8_t offset;
+};
+
 struct Device {
 	uint8_t bus;
 	uint8_t device;
@@ -34,8 +45,11 @@ struct Device {
 	uint8_t header_type;
 
 	BAR bars[6];
+	Vector<Capabability> capabilities;
 
 	void* map_bar(int bar_number);
+	uint8_t capability_offset(CapabilityID id);
+	bool has_capability(CapabilityID id);
 };
 
 }
