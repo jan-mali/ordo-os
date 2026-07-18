@@ -48,4 +48,50 @@ uint32_t read32(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset) {
 	return IO::inl(CONFIG_DATA);
 }
 
+void write8(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint8_t value) {
+	uint32_t bus32 = static_cast<uint32_t>(bus);
+	uint32_t dev32 = static_cast<uint32_t>(dev);
+	uint32_t func32 = static_cast<uint32_t>(func);
+
+	uint32_t address = static_cast<uint32_t>((bus32 << 16) | (dev32 << 11) | (func32 << 8) | (offset & 0xFC) | 0x80000000);
+
+	IO::outl(CONFIG_ADDRESS, address);
+
+	uint32_t data = IO::inl(CONFIG_DATA);
+
+	data &= ~(0xFF << ((offset & 3) * 8));
+	data |= (static_cast<uint32_t>(value) << ((offset & 3) * 8));
+
+	IO::outl(CONFIG_DATA, data);
+}
+
+void write16(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint16_t value) {
+	uint32_t bus32 = static_cast<uint32_t>(bus);
+	uint32_t dev32 = static_cast<uint32_t>(dev);
+	uint32_t func32 = static_cast<uint32_t>(func);
+
+	uint32_t address = static_cast<uint32_t>((bus32 << 16) | (dev32 << 11) | (func32 << 8) | (offset & 0xFC) | 0x80000000);
+
+	IO::outl(CONFIG_ADDRESS, address);
+
+	uint32_t data = IO::inl(CONFIG_DATA);
+
+	data &= ~(0xFFFF << ((offset & 2) * 8));
+	data |= (static_cast<uint32_t>(value) << ((offset & 2) * 8));
+
+	IO::outl(CONFIG_DATA, data);
+}
+
+void write32(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t value) {
+	uint32_t bus32 = static_cast<uint32_t>(bus);
+	uint32_t dev32 = static_cast<uint32_t>(dev);
+	uint32_t func32 = static_cast<uint32_t>(func);
+
+	uint32_t address = static_cast<uint32_t>((bus32 << 16) | (dev32 << 11) | (func32 << 8) | (offset & 0xFC) | 0x80000000);
+
+	IO::outl(CONFIG_ADDRESS, address);
+
+	IO::outl(CONFIG_DATA, value);
+}
+
 }
