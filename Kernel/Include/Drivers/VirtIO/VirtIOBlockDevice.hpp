@@ -42,8 +42,11 @@ public:
 		, pci_device(pci_device)
 		, notify_offset_multiplier(notify_offset_multiplier) {}
 
+	virtual ~VirtIOBlockDevice() = default;
+
 	bool read(uint64_t lba, uint64_t count, uint8_t* buffer) override;
 	bool write(uint64_t lba, uint64_t count, uint8_t* buffer) override;
+	int block_size() override { return 512; }
 
 	bool initialize();
 
