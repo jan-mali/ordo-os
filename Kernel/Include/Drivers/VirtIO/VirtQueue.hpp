@@ -6,6 +6,8 @@
 
 namespace Drivers::VirtIO {
 
+class VirtIOBlockDevice;
+
 struct VirtQueueDescriptor {
 	uint64_t address;
 	uint32_t length;
@@ -32,6 +34,8 @@ struct VirtQueueUsed {
 };
 
 class VirtQueue {
+	friend class VirtIOBlockDevice;
+
 public:
 	bool initialize(volatile CommonConfig* config, uint16_t index);
 
@@ -52,6 +56,8 @@ private:
 
 	uint16_t available_index;
 	uint16_t used_index;
+
+	uint16_t notify_offset;
 
 	Vector<uint16_t> free_descriptors;
 };

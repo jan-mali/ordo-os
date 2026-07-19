@@ -29,6 +29,7 @@ bool VirtQueue::initialize(volatile CommonConfig* config, uint16_t index) {
 	config->queue_select = index;
 
 	size = config->queue_size;
+	notify_offset = config->queue_notify_off;
 
 	if (size == 0) {
 		Logger::log_error("VirtQueue: Queue does not exist\n");

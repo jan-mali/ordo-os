@@ -35,6 +35,9 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 		if (old->state != ThreadState::Running) {
 			panic("Preemption is disabled but thread %d cannot be scheduled as it is %s.\n", old->id, thread_state_to_string(old->state));
 		}
+
+		// Logger::log_debug("About to reschedule non-preemptible thread %d, rsp=%016llX\n", current->id, current->interrupt_rsp);
+
 		return 0;
 	}
 
@@ -65,6 +68,7 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 
 	if (!next) {
 		if (old->state == ThreadState::Running) {
+			// Logger::log_debug("About to reschedule only runnable thread %d, rsp=%016llX\n", current->id, current->interrupt_rsp);
 			return reinterpret_cast<uint64_t>(regs);
 		}
 		next = idle_task_thread;

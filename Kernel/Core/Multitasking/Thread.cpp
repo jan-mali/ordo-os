@@ -16,7 +16,7 @@ void thread_entry();
 
 Thread* create_thread(void (*entry)(void*), void* argument, const char* name) {
 	Thread* thread = new Thread();
-	uint8_t* stack = reinterpret_cast<uint8_t*>(kernel_vmm.allocate_pages(STACK_PAGES));
+	uint8_t* stack = reinterpret_cast<uint8_t*>(kernel_vmm.allocate_pages(STACK_PAGES, true));
 	thread->id = ++max_thread_id;
 
 	if (name) {

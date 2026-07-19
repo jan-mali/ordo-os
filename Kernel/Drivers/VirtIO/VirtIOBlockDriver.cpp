@@ -24,6 +24,8 @@ bool VirtIOBlockDriver::attach(PCI::Device& pci_device) {
 	ConfigurationRegion isr_region;
 	ConfigurationRegion device_region;
 
+	uint32_t notify_offset_multiplier = 0;
+
 	for (PCI::Capabability& cap : pci_device.capabilities) {
 		if (cap.id != static_cast<uint8_t>(PCI::CapabilityID::VendorSpecific)) {
 			continue;
@@ -48,6 +50,7 @@ bool VirtIOBlockDriver::attach(PCI::Device& pci_device) {
 		case VIRTIO_PCI_CAP_NOTIFY_CFG:
 			// The VirtIO spec mandates that we take the first value that is valid
 			if (notify_region.bar > 5 && bar <= 5) {
+				notify_offset_multiplier = PCI::ConfigurationSpace::read32(pci_device.bus, pci_device.device, pci_device.function, cap.offset + 16);
 				notify_region.bar = bar;
 				notify_region.offset = offset;
 				notify_region.length = length;
@@ -135,7 +138,7 @@ bool VirtIOBlockDriver::attach(PCI::Device& pci_device) {
 		device_region
 	};
 
-	VirtIOBlockDevice* device = new VirtIOBlockDevice(pointers, &pci_device);
+	VirtIOBlockDevice* device = new VirtIOBlockDevice(pointers, &pci_device, notify_offset_multiplier);
 
 	if (!device->initialize()) {
 		Logger::log_error("VirtIO: VirtIOBlockDevice initialization failed.\n");
