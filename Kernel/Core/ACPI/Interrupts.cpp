@@ -98,8 +98,10 @@ InterruptManager::InterruptManager(MADT::MADTHeader* madt) {
 				break;
 			}
 
-			if (lapic_found)
-				panic("Multiple Local APICs found. SMP is NOT supported.\n");
+			if (lapic_found) {
+				Logger::log_warning("CPUInfo: Extra Local APIC found. SMP is not supported.\n");
+				break;
+			}
 
 			lapic_found = true;
 
