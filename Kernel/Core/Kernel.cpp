@@ -16,7 +16,7 @@
 #include <Core/TextConsole.hpp>
 #include <Drivers/DeviceManager.hpp>
 #include <Drivers/DriverManager.hpp>
-#include <Drivers/VirtIO/VirtIOBlockDevice.hpp>
+#include <Drivers/GPT/GPTPartitionDevice.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 #include <cstddef>
@@ -179,8 +179,8 @@ void init_stage2(void*) {
 	PCI::attach_drivers();
 
 	// Disk demo
-	if (Drivers::DeviceManager::devices.size() > 0) {
-		auto* disk = dynamic_cast<Drivers::VirtIO::VirtIOBlockDevice*>(Drivers::DeviceManager::devices[0]);
+	if (Drivers::DeviceManager::devices.size() > 1) {
+		auto* disk = dynamic_cast<Drivers::GPT::GPTPartitionDevice*>(Drivers::DeviceManager::devices[0]);
 		if (!disk)
 			return;
 

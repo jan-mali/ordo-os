@@ -141,6 +141,55 @@ static void print_signed(int64_t value, int width, bool zero_pad) {
 	print_dec_raw(absolute);
 }
 
+static void print_guid(const uint8_t* guid, bool uppercase) {
+	const char* hex = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+
+	for (int i = 3; i >= 0; i--) {
+		putc(hex[(guid[i] >> 4) & 0xF]);
+		putc(hex[guid[i] & 0xF]);
+	}
+
+	putc('-');
+
+	for (int i = 5; i >= 4; i--) {
+		putc(hex[(guid[i] >> 4) & 0xF]);
+		putc(hex[guid[i] & 0xF]);
+	}
+
+	putc('-');
+
+	for (int i = 7; i >= 6; i--) {
+		putc(hex[(guid[i] >> 4) & 0xF]);
+		putc(hex[guid[i] & 0xF]);
+	}
+
+	putc('-');
+
+	for (int i = 8; i < 10; i++) {
+		putc(hex[(guid[i] >> 4) & 0xF]);
+		putc(hex[guid[i] & 0xF]);
+	}
+
+	putc('-');
+
+	for (int i = 10; i < 16; i++) {
+		putc(hex[(guid[i] >> 4) & 0xF]);
+		putc(hex[guid[i] & 0xF]);
+	}
+}
+
+static void print_utf16le(const uint16_t* str) {
+	while (*str) {
+		uint16_t c = *str++;
+
+		if (c < 0x80) {
+			putc((char)c);
+		} else {
+			putc('?');
+		}
+	}
+}
+
 int kprintf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
@@ -287,6 +336,26 @@ int kvprintf(const char* fmt, va_list args) {
 				value = va_arg(args, uint32_t);
 
 			print_unsigned(value, width, zero_pad);
+
+			break;
+		}
+
+		case 'g':
+		case 'G': {
+			const uint8_t* guid = va_arg(args, const uint8_t*);
+
+			print_guid(guid, c == 'G');
+
+			break;
+		}
+
+		case 'w': {
+			const uint16_t* value = va_arg(args, const uint16_t*);
+
+			if (value)
+				print_utf16le(value);
+			else
+				print_str("(null)");
 
 			break;
 		}

@@ -96,6 +96,12 @@ bool VirtIOBlockDevice::execute_request(uint32_t type, uint64_t lba, uint64_t co
 	return req.status == 0; // VirtIO success state is 0 (VIRTIO_BLK_S_OK)
 }
 
+uint64_t VirtIOBlockDevice::sector_count() {
+	volatile BlockDeviceConfig* device_config = reinterpret_cast<volatile BlockDeviceConfig*>(config.device.address);
+
+	return device_config->capacity;
+}
+
 bool VirtIOBlockDevice::initialize() {
 	// Spec link: https://docs.oasis-open.org/virtio/virtio/v1.1/cs01/virtio-v1.1-cs01.html#x1-92001r90
 

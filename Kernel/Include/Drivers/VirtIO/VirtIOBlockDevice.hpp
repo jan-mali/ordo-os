@@ -46,7 +46,8 @@ public:
 
 	bool read(uint64_t lba, uint64_t count, uint8_t* buffer) override;
 	bool write(uint64_t lba, uint64_t count, uint8_t* buffer) override;
-	int block_size() override { return 512; }
+	uint64_t sector_size() override { return 512; }
+	uint64_t sector_count() override;
 
 	bool initialize();
 
