@@ -14,9 +14,7 @@
 #include <Core/PCI/PCI.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
-#include <Drivers/DeviceManager.hpp>
 #include <Drivers/DriverManager.hpp>
-#include <Drivers/GPT/GPTPartitionDevice.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
 #include <cstddef>
@@ -177,41 +175,4 @@ void init_stage2(void*) {
 
 	PCI::enumerate();
 	PCI::attach_drivers();
-
-	// Disk demo
-	if (Drivers::DeviceManager::devices.size() > 1) {
-		auto* disk = dynamic_cast<Drivers::GPT::GPTPartitionDevice*>(Drivers::DeviceManager::devices[0]);
-		if (!disk)
-			return;
-
-		uint8_t buffer[512];
-
-		disk->read(0, 1, buffer);
-
-		uint8_t* ptr = buffer;
-		*ptr++ = 'H';
-		*ptr++ = 'e';
-		*ptr++ = 'l';
-		*ptr++ = 'l';
-		*ptr++ = 'o';
-		*ptr++ = ' ';
-		*ptr++ = 'w';
-		*ptr++ = 'o';
-		*ptr++ = 'r';
-		*ptr++ = 'l';
-		*ptr++ = 'd';
-		*ptr++ = '!';
-		*ptr++ = '\x69';
-
-		disk->write(0, 1, buffer);
-
-		for (size_t i = 0; i < sizeof(buffer); i++) {
-			Logger::kprintf("%02x", buffer[i]);
-			if (i % 16 == 15) {
-				Logger::kprintf("\n");
-			} else {
-				Logger::kprintf(" ");
-			}
-		}
-	}
 }
