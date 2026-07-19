@@ -19,6 +19,8 @@ public:
 
 	bool initialize();
 
+	void handle_interrupt(Registers* regs);
+
 private:
 	ConfigurationPointers config;
 	PCI::Device* pci_device;

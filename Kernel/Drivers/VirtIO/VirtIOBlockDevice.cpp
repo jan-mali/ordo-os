@@ -1,3 +1,5 @@
+#include <Arch/x86_64/IDT.hpp>
+#include <Core/PCI/MSIX.hpp>
 #include <Drivers/VirtIO/VirtIOBlockDevice.hpp>
 #include <Drivers/VirtIO/VirtIOCapability.hpp>
 #include <Drivers/VirtIO/VirtQueue.hpp>
@@ -103,16 +105,40 @@ bool VirtIOBlockDevice::initialize() {
 
 		virtqueue = queue;
 
+		// This is set up later in this function
+		common_config->queue_msix_vector = 0;
+
 		break;
 	}
 
-	// TODO: Interrupts
+	uint8_t irq_vector = Interrupts::IDT::allocate_dynamic_vector();
+	Interrupts::IDT::set_dynamic_handler(irq_vector, this, [](void* object, Registers* regs) {
+		VirtIOBlockDevice* obj = reinterpret_cast<VirtIOBlockDevice*>(object);
+		obj->handle_interrupt(regs);
+	});
+
+	PCI::MSIX::setup_vector(*pci_device, 0, irq_vector);
+
+	// For debugging only, this WILL crash
+	// FIXME FIXME FIXME
+	// FIXME: Config change IRQ
+	PCI::MSIX::setup_vector(*pci_device, 1, 69);
+
+	PCI::MSIX::enable(*pci_device);
+
+	common_config->msix_config = 1;
 
 	// 8. Set the DRIVER_OK status bit. At this point the device is “live”.
 
-	common_config->device_status |= static_cast<uint8_t>(DeviceStatusFlags::Failed);
+	common_config->device_status |= static_cast<uint8_t>(DeviceStatusFlags::DriverOk);
 
-	return false;
+	Logger::log_info("VirtIO: Successfully initialized the block device\n");
+
+	return true;
+}
+
+void VirtIOBlockDevice::handle_interrupt(Registers* regs) {
+	Logger::log_debug("TODO: handle_interrupt :)\n");
 }
 
 }

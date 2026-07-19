@@ -11,8 +11,13 @@ constexpr uint8_t LAST_DYNAMIC_VECTOR = 0xFE;
 constexpr uint8_t DYNAMIC_VECTOR_COUNT = LAST_DYNAMIC_VECTOR - FIRST_DYNAMIC_VECTOR + 1;
 
 uint8_t allocate_dynamic_vector();
-void set_dynamic_handler(uint8_t vector, void (*handler)(Registers*));
+void set_dynamic_handler(uint8_t vector, void* object, void (*handler)(void*, Registers*));
 
-extern void (*dynamic_handlers[DYNAMIC_VECTOR_COUNT])(Registers*);
+struct DynamicIRQEntry {
+	void* object;
+	void (*handler)(void*, Registers*);
+};
+
+extern DynamicIRQEntry dynamic_handlers[DYNAMIC_VECTOR_COUNT];
 
 }

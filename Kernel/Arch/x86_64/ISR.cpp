@@ -162,12 +162,12 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 
 	if (registers->int_no >= Interrupts::IDT::FIRST_DYNAMIC_VECTOR && registers->int_no <= Interrupts::IDT::LAST_DYNAMIC_VECTOR) {
 		// Dynamic vectors
-		auto* handler = Interrupts::IDT::dynamic_handlers[registers->int_no - Interrupts::IDT::FIRST_DYNAMIC_VECTOR];
-		if (!handler) {
+		Interrupts::IDT::DynamicIRQEntry entry = Interrupts::IDT::dynamic_handlers[registers->int_no - Interrupts::IDT::FIRST_DYNAMIC_VECTOR];
+		if (!entry.handler) {
 			panic("No handler set for dynamic interrupt vector %d.\n", registers->int_no);
 		}
 
-		handler(registers);
+		entry.handler(entry.object, registers);
 
 		return 0;
 	}
