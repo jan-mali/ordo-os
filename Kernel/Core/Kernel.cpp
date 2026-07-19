@@ -180,7 +180,7 @@ void init_stage2(void*) {
 
 	// Disk demo
 	if (Drivers::DeviceManager::devices.size() > 0) {
-		auto* disk = static_cast<Drivers::VirtIO::VirtIOBlockDevice*>(Drivers::DeviceManager::devices[0]);
+		auto* disk = dynamic_cast<Drivers::VirtIO::VirtIOBlockDevice*>(Drivers::DeviceManager::devices[0]);
 		if (!disk)
 			return;
 

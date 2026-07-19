@@ -5,11 +5,14 @@ COMMON_WARNINGS := \
 
 COMMON_FLAGS := \
     -ffreestanding \
+    -frtti \
     -fno-exceptions \
-    -fno-rtti \
     -fno-stack-protector \
-    -march=x86-64 \
     -fno-builtin \
+    -fno-tree-vectorize \
+    -fno-tree-slp-vectorize \
+    -fno-omit-frame-pointer \
+    -fno-optimize-sibling-calls \
     -mno-sse \
     -mno-sse2 \
     -mno-sse3 \
@@ -19,10 +22,7 @@ COMMON_FLAGS := \
     -mno-sse4.2 \
     -mno-avx \
     -mno-red-zone \
-    -fno-tree-vectorize \
-    -fno-tree-slp-vectorize \
-    -fno-omit-frame-pointer \
-    -fno-optimize-sibling-calls \
+    -march=x86-64 \
     -mcmodel=kernel
 
 CFLAGS := \
@@ -49,4 +49,4 @@ LDFLAGS := \
     -nostdlib \
     -T Boot/linker.ld
 
-LIBS := -lgcc
+LIBS := -lgcc -lsupc++
