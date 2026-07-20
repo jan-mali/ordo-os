@@ -4,13 +4,15 @@ set -e
 IMG=disk.img
 SIZE=512M
 
-ESP_SIZE=64MiB
-
 BOOT_LIMINE=Boot/Limine
 KERNEL=Build/kernel.elf
 
 WORK=Build/mount
 ROOTFS=$WORK/rootfs
+
+INITRAMFS=Initramfs
+INITRAMFS_TAR=Build/initramfs.tar
+ROOT=Base
 
 rm -f "$IMG"
 truncate -s "$SIZE" "$IMG"
@@ -44,7 +46,22 @@ sudo cp "$KERNEL" \
 sudo cp Boot/limine.conf \
     "$WORK/esp/boot/"
 
-sudo mkdir -p "$ROOTFS"/{test1,test2,test3}
+sudo cp -a "$ROOT"/. "$ROOTFS"/
+
+echo "Creating initramfs..."
+
+rm -f "$INITRAMFS_TAR"
+
+tar \
+    --format=ustar \
+    -C "$INITRAMFS" \
+    -cf "$INITRAMFS_TAR" \
+    .
+
+echo "Copying initramfs..."
+
+sudo cp "$INITRAMFS_TAR" \
+    "$WORK/esp/boot/initramfs.tar"
 
 sudo umount "$ROOTFS"
 sudo umount "$WORK/esp"
