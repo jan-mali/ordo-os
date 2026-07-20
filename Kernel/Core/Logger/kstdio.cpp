@@ -360,6 +360,14 @@ int kvprintf(const char* fmt, va_list args) {
 			break;
 		}
 
+		case 'c': {
+			char value = va_arg(args, int) & 0xFF;
+
+			putc(value);
+
+			break;
+		}
+
 		default:
 			putc('%');
 			putc(c);

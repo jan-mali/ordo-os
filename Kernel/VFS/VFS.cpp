@@ -150,4 +150,26 @@ void VFS::close(OpenFile* file) {
 	delete file;
 }
 
+void debug_list_directory(VFSNode* dir) {
+	DirectoryEntry entry;
+
+	for (uint64_t i = 0; dir->readdir(i, &entry); i++) {
+		char entry_type;
+
+		switch (entry.type) {
+		case VFSNodeType::File:
+			entry_type = 'F';
+			break;
+		case VFSNodeType::Directory:
+			entry_type = 'D';
+			break;
+		default:
+			entry_type = 'U';
+			break;
+		}
+
+		Logger::log_info("%2d. [%c] %s\n", i + 1, entry_type, entry.name);
+	}
+}
+
 }

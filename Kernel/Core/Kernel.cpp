@@ -196,54 +196,17 @@ void init_stage2(void*) {
 	PCI::enumerate();
 	PCI::attach_drivers();
 
-	TmpFS* fsA = new TmpFS();
-	TmpFS* fsB = new TmpFS();
-	TmpFS* fsC = new TmpFS();
+	TmpFS* root_fs = new TmpFS();
 
-	// FS A
-	auto* root = fsA->root();
+	auto* root = root_fs->root();
 
-	auto* home = root->mkdir("home");
-	auto* user = home->mkdir("user");
-	auto* notes = user->create("notes.txt");
+	auto* test = root->mkdir("test");
+	auto* secret = root->mkdir("secret");
+	secret->create("notes.txt");
 
-	auto* mnt = root->mkdir("mnt");
-	auto* mountB = mnt->mkdir("B");
+	VFS::VFS::mount_root_filesystem(root_fs);
 
-	// FS B
-	auto* broot = fsB->root();
-
-	auto* docs = broot->mkdir("docs");
-	auto* readme = docs->create("readme.txt");
-
-	auto* nested = broot->mkdir("nested");
-	auto* mountC = nested->mkdir("C");
-
-	// FS C
-	auto* croot = fsC->root();
-
-	auto* hello = croot->create("hello.txt");
-
-	auto* back = croot->mkdir("back");
-	auto* mountA = back->mkdir("A");
-
-	notes->write(0, 29, (uint8_t*)"Hello from filesystem A!/home");
-	readme->write(0, 29, (uint8_t*)"Hello from filesystem B!/docs");
-	hello->write(0, 29, (uint8_t*)"Hello from filesystem C!/root");
-
-	VFS::VFS::mount_root_filesystem(fsA);
-
-	VFS::VFS::mount(fsB, mountB);
-	VFS::VFS::mount(fsC, mountC);
-	VFS::VFS::mount(home, mountA);
-
-	print_file("/home/user/notes.txt");
-
-	print_file("/mnt/B/docs/readme.txt");
-
-	print_file("/mnt/B/nested/C/hello.txt");
-
-	print_file("/mnt/B/nested/C/back/A/user/notes.txt");
-	print_file("/mnt/B/nested/C/back/A/user/./notes.txt");
-	print_file("/mnt/B/nested/C/back/A/user/../user/notes.txt");
+	VFS::debug_list_directory(root);
+	VFS::debug_list_directory(test);
+	VFS::debug_list_directory(secret);
 }

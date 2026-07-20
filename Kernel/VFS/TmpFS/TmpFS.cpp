@@ -139,6 +139,8 @@ bool TmpFSNode::readdir(uint64_t index, DirectoryEntry* entry) {
 	memcpy(entry->name, e.name, name_length);
 	entry->name[name_length] = '\0';
 
+	entry->type = e.node->type;
+
 	return true;
 }
 

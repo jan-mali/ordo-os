@@ -31,4 +31,6 @@ private:
 	static Vector<MountPoint> mounts;
 };
 
+void debug_list_directory(VFSNode* dir);
+
 }
