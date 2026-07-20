@@ -2,6 +2,7 @@
 
 #include <Utility/Vector.hpp>
 #include <VFS/FileSystem.hpp>
+#include <VFS/OpenFile.hpp>
 #include <VFS/VFSNode.hpp>
 
 namespace VFS {
@@ -20,6 +21,9 @@ public:
 	static bool mount(FileSystem* fs, VFSNode* target);
 	static bool mount(VFSNode* node, VFSNode* target);
 	static VFSNode* resolve(const char* path);
+
+	static OpenFile* open(const char* path);
+	static void close(OpenFile* file);
 
 private:
 	static FileSystem* root_fs;

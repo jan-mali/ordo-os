@@ -3,6 +3,7 @@
 #include <Logger/kstdio.hpp>
 #include <Utility/String.hpp>
 #include <VFS/FileSystem.hpp>
+#include <VFS/OpenFile.hpp>
 #include <VFS/VFS.hpp>
 #include <VFS/VFSNode.hpp>
 #include <cstddef>
@@ -108,6 +109,26 @@ VFSNode* VFS::resolve(const char* path) {
 
 	// TODO: Resolve paths
 	return current;
+}
+
+OpenFile* VFS::open(const char* path) {
+	VFSNode* node = resolve(path);
+
+	if (!node) {
+		return nullptr;
+	}
+
+	if (node->node_type() != VFSNodeType::File) {
+		return nullptr;
+	}
+
+	OpenFile* file = new OpenFile(node);
+
+	return file;
+}
+
+void VFS::close(OpenFile* file) {
+	delete file;
 }
 
 }
