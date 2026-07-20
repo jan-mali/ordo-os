@@ -49,6 +49,9 @@ VFSNode* VFS::resolve(const char* path) {
 
 	VFSNode* current = root_node;
 
+	VFSNode* parents[256];
+	size_t parent_count = 0;
+
 	while (*p) {
 		// Skip consecutive '/'
 		while (*p == '/')
@@ -73,21 +76,38 @@ VFSNode* VFS::resolve(const char* path) {
 		Logger::log_info("VFS::resolve: %16s", component);
 
 		if (strcmp(component, ".") == 0) {
-			Logger::kprintf("- current directory\n");
+			Logger::kprintf(" - current directory\n");
 			continue;
 		}
 
 		if (strcmp(component, "..") == 0) {
-			Logger::kprintf("- parent directory\n");
-			Logger::log_error("Parent directories are not yet supported :'(\n");
-			return nullptr;
+			Logger::kprintf(" - parent directory\n");
+
+			if (parent_count > 0) {
+				current = parents[--parent_count];
+			} else {
+				// Already at root, stay there
+				current = root_node;
+			}
+
+			continue;
 		}
 
-		current = current->lookup(component);
-		if (!current) {
+		VFSNode* next = current->lookup(component);
+
+		if (!next) {
 			Logger::kprintf(" - not found\n");
 			return nullptr;
 		}
+
+		// Save current node before moving down
+		if (parent_count >= sizeof(parents) / sizeof(parents[0])) {
+			Logger::log_error("VFS::resolve: path too deep\n");
+			return nullptr;
+		}
+
+		parents[parent_count++] = current;
+		current = next;
 
 		bool is_mount = false;
 
@@ -107,7 +127,6 @@ VFSNode* VFS::resolve(const char* path) {
 		Logger::kprintf(" - found\n");
 	}
 
-	// TODO: Resolve paths
 	return current;
 }
 
