@@ -125,7 +125,7 @@ bool TmpFSNode::readdir(uint64_t index, DirectoryEntry* entry) {
 		return false;
 	}
 
-	if (index > entries.size()) {
+	if (index >= entries.size()) {
 		return false;
 	}
 
