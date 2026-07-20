@@ -1,3 +1,4 @@
+#include <Core/memory.hpp>
 #include <Utility/String.hpp>
 #include <cstddef>
 
@@ -92,5 +93,16 @@ char* strrchr(const char* str, int c) {
 		return (char*)str;
 
 	return (char*)last;
+}
+
+char* strdup(const char* str) {
+	size_t len = strlen(str);
+
+	char* out = new char[len + 1];
+	if (!out)
+		return nullptr;
+
+	memcpy(out, str, len + 1);
+	return out;
 }
 }

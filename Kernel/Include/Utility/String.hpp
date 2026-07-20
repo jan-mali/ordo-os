@@ -12,4 +12,5 @@ char* strncpy(char* dst, const char* src, size_t n);
 char* strcat(char* dst, const char* src);
 char* strchr(const char* str, int c);
 char* strrchr(const char* str, int c);
+char* strdup(const char* str);
 }

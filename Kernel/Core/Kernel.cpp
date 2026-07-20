@@ -17,6 +17,8 @@
 #include <Drivers/DriverManager.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
+#include <VFS/TmpFS/TmpFS.hpp>
+#include <VFS/VFS.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <limine.h>
@@ -168,6 +170,24 @@ extern "C" void kmain() {
 	panic("Reached end of kmain\n");
 }
 
+using namespace VFS::TmpFS;
+
+void print_file(const char* path) {
+	auto* file = VFS::VFS::resolve(path);
+
+	if (!file) {
+		Logger::log_error("%-40s => NOT FOUND :(\n", path);
+		return;
+	}
+
+	char buffer[128] = {};
+
+	uint64_t n = file->read(0, sizeof(buffer) - 1, (uint8_t*)buffer);
+	buffer[n] = '\0';
+
+	Logger::log_info("%-40s => %s\n", path, buffer);
+}
+
 void init_stage2(void*) {
 	Logger::log_info("Continuing boot from init_stage2! :)\n");
 
@@ -175,4 +195,55 @@ void init_stage2(void*) {
 
 	PCI::enumerate();
 	PCI::attach_drivers();
+
+	TmpFS* fsA = new TmpFS();
+	TmpFS* fsB = new TmpFS();
+	TmpFS* fsC = new TmpFS();
+
+	// FS A
+	auto* root = fsA->root();
+
+	auto* home = root->mkdir("home");
+	auto* user = home->mkdir("user");
+	auto* notes = user->create("notes.txt");
+
+	auto* mnt = root->mkdir("mnt");
+	auto* mountB = mnt->mkdir("B");
+
+	// FS B
+	auto* broot = fsB->root();
+
+	auto* docs = broot->mkdir("docs");
+	auto* readme = docs->create("readme.txt");
+
+	auto* nested = broot->mkdir("nested");
+	auto* mountC = nested->mkdir("C");
+
+	// FS C
+	auto* croot = fsC->root();
+
+	auto* hello = croot->create("hello.txt");
+
+	auto* back = croot->mkdir("back");
+	auto* mountA = back->mkdir("A");
+
+	notes->write(0, 29, (uint8_t*)"Hello from filesystem A!/home");
+	readme->write(0, 29, (uint8_t*)"Hello from filesystem B!/docs");
+	hello->write(0, 29, (uint8_t*)"Hello from filesystem C!/root");
+
+	VFS::VFS::mount_root_filesystem(fsA);
+
+	VFS::VFS::mount(fsB, mountB);
+	VFS::VFS::mount(fsC, mountC);
+	VFS::VFS::mount(home, mountA);
+
+	print_file("/home/user/notes.txt");
+
+	print_file("/mnt/B/docs/readme.txt");
+
+	print_file("/mnt/B/nested/C/hello.txt");
+
+	print_file("/mnt/B/nested/C/back/A/user/notes.txt");
+	print_file("/mnt/B/nested/C/back/A/user/./notes.txt");
+	print_file("/mnt/B/nested/C/back/A/user/../user/notes.txt");
 }
