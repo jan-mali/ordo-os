@@ -14,9 +14,14 @@
 #include <Core/PCI/PCI.hpp>
 #include <Core/Panic.hpp>
 #include <Core/TextConsole.hpp>
+#include <Core/memory.hpp>
+#include <Drivers/BlockDevice.hpp>
+#include <Drivers/DeviceManager.hpp>
 #include <Drivers/DriverManager.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
+#include <VFS/Ext2/Ext2FS.hpp>
+#include <VFS/OpenFile.hpp>
 #include <VFS/TmpFS/TmpFS.hpp>
 #include <VFS/VFS.hpp>
 #include <cstddef>
@@ -170,24 +175,6 @@ extern "C" void kmain() {
 	panic("Reached end of kmain\n");
 }
 
-using namespace VFS::TmpFS;
-
-void print_file(const char* path) {
-	auto* file = VFS::VFS::resolve(path);
-
-	if (!file) {
-		Logger::log_error("%-40s => NOT FOUND :(\n", path);
-		return;
-	}
-
-	char buffer[128] = {};
-
-	uint64_t n = file->read(0, sizeof(buffer) - 1, (uint8_t*)buffer);
-	buffer[n] = '\0';
-
-	Logger::log_info("%-40s => %s\n", path, buffer);
-}
-
 void init_stage2(void*) {
 	Logger::log_info("Continuing boot from init_stage2! :)\n");
 
@@ -196,17 +183,43 @@ void init_stage2(void*) {
 	PCI::enumerate();
 	PCI::attach_drivers();
 
-	TmpFS* root_fs = new TmpFS();
+	auto* root_partition = dynamic_cast<Drivers::BlockDevice*>(Drivers::DeviceManager::devices[2]);
 
-	auto* root = root_fs->root();
+	if (!root_partition) {
+		panic("Failed to find the root partition.\n");
+	}
 
-	auto* test = root->mkdir("test");
-	auto* secret = root->mkdir("secret");
-	secret->create("notes.txt");
+	auto* root_fs = VFS::Ext2::Ext2FS::mount(root_partition);
+
+	if (!root_fs) {
+		panic("Failed to mount the root filesystem.\n");
+	}
 
 	VFS::VFS::mount_root_filesystem(root_fs);
 
-	VFS::debug_list_directory(root);
-	VFS::debug_list_directory(test);
-	VFS::debug_list_directory(secret);
+	VFS::debug_list_directory(root_fs->root());
+
+	uint8_t buffer[32];
+
+	memset(buffer, 0, sizeof(buffer));
+
+	VFS::OpenFile* test = VFS::VFS::open("/test.txt");
+	if (test) {
+		test->read(sizeof(buffer) - 1, buffer);
+		VFS::VFS::close(test);
+		Logger::log_info("test.txt: \"%s\"\n", buffer);
+	} else {
+		Logger::log_error("Failed to open /test.txt\n");
+	}
+
+	memset(buffer, 0, sizeof(buffer));
+
+	test = VFS::VFS::open("/secrets/hello.txt");
+	if (test) {
+		test->read(sizeof(buffer) - 1, buffer);
+		VFS::VFS::close(test);
+		Logger::log_info("hello.txt: \"%s\"\n", buffer);
+	} else {
+		Logger::log_error("Failed to open /secrets/hello.txt\n");
+	}
 }

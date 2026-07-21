@@ -151,9 +151,17 @@ void VFS::close(OpenFile* file) {
 }
 
 void debug_list_directory(VFSNode* dir) {
+	uint64_t entry_count = dir->entry_count();
+
+	Logger::log_info("Directory contains %lld entries:\n", entry_count);
+
 	DirectoryEntry entry;
 
-	for (uint64_t i = 0; dir->readdir(i, &entry); i++) {
+	for (uint64_t i = 0; i < entry_count; i++) {
+		if (!dir->readdir(i, &entry)) {
+			continue;
+		}
+
 		char entry_type;
 
 		switch (entry.type) {

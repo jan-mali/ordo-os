@@ -26,7 +26,7 @@ parted -s "$IMG" \
 LOOP=$(sudo losetup --find --show --partscan "$IMG")
 
 sudo mkfs.fat -F32 ${LOOP}p1
-sudo mkfs.ext2 -L ROOTFS ${LOOP}p2
+sudo mkfs.ext2 -L ROOTFS -O none ${LOOP}p2
 
 mkdir -p "$WORK/esp"
 mkdir -p "$ROOTFS"

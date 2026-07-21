@@ -18,6 +18,7 @@ struct DirectoryEntry {
 
 class VFSNode {
 public:
+	VFSNode() = default;
 	virtual ~VFSNode() = default;
 
 	// File services
@@ -35,6 +36,10 @@ public:
 	virtual FileSystem* filesystem() = 0;
 
 	VFSNodeType node_type() const { return type; }
+
+	// Don't allow copying of VFSNode
+	VFSNode(const VFSNode&) = delete;
+	VFSNode& operator=(const VFSNode&) = delete;
 
 protected:
 	VFSNodeType type;
