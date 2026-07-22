@@ -1,4 +1,5 @@
 #include <Arch/x86_64/IDT.hpp>
+#include <Arch/x86_64/Interrupts.hpp>
 #include <Core/ACPI/Interrupts.hpp>
 #include <Core/MM/Paging.hpp>
 #include <Core/PCI/MSIX.hpp>
@@ -69,7 +70,7 @@ bool VirtIOBlockDevice::execute_request(uint32_t type, uint64_t lba, uint64_t co
 	virtqueue->available_index++;
 
 	// Ensure data writes are visible to the CPU memory bus before index advance
-	__asm__ volatile("" ::: "memory");
+	__asm__ volatile("mfence" ::: "memory");
 	virtqueue->available->index = virtqueue->available_index;
 
 	// Notify the hardware via the MMIO/PIO Notification capability base
@@ -79,12 +80,14 @@ bool VirtIOBlockDevice::execute_request(uint32_t type, uint64_t lba, uint64_t co
 	device_lock.unlock();
 
 	// 2. Thread Sleep Section
+	uint64_t flags = Interrupts::store_and_disable();
 	req.lock.acquire(); // Acquire the local RawSpinlock
 	while (!req.completed) {
 		// Drop local lock, yield CPU, and re-acquire upon wakeup
-		req.wq.sleep(req.lock);
+		req.wq.sleep(req.lock, &flags);
 	}
 	req.lock.release();
+	Interrupts::restore(flags);
 
 	// 3. Post-completion descriptor reclamation
 	device_lock.lock();
@@ -236,12 +239,9 @@ void VirtIOBlockDevice::handle_interrupt(Registers*) {
 			outstanding_requests[head_id] = nullptr;
 
 			// Protect thread state configuration change
-			req->lock.acquire();
 			req->completed = true;
 
 			req->wq.wake_all();
-
-			req->lock.release();
 		}
 
 		virtqueue->used_index++;

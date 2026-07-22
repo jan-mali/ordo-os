@@ -7,7 +7,7 @@
 #include <Drivers/VirtIO/VirtIOCapability.hpp>
 #include <Drivers/VirtIO/VirtQueue.hpp>
 #include <Utility/IRQSpinlock.hpp>
-#include <Utility/WaitQueue.hpp>
+#include <Utility/IRQWaitQueue.hpp>
 #include <cstdint>
 
 namespace Drivers::VirtIO {
@@ -28,7 +28,7 @@ constexpr int VIRTQ_DESC_F_WRITE = 2;
 // Tracking structure allocated on the thread's stack
 struct BlockRequest {
 	RawSpinlock lock;
-	WaitQueue wq;
+	IRQWaitQueue wq;
 	volatile bool completed = false;
 	volatile uint8_t status = 0xFF;
 
