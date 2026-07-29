@@ -1,19 +1,15 @@
-include Config.mk
-include Toolchain.mk
-include Flags.mk
-include Sources.mk
-include Build.mk
-include Image.mk
-include Run.mk
+.PHONY: all clean rebuild
 
-.PHONY: all clean rebuild image run debug
-
-all: $(KERNEL)
-	@echo
-	@echo "Kernel built successfully"
+all:
+	make -C Kernel/
+	make -C Userspace/LibC/
+	make -C Userspace/init/
 
 clean:
 	rm -rf Build disk.img
 
 rebuild: clean
 	$(MAKE)
+
+include Image.mk
+include Run.mk

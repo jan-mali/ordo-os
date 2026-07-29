@@ -1,4 +1,6 @@
 IMAGE := disk.img
 
-image: $(KERNEL)
+.PHONY: image
+
+image: all
 	@bash Scripts/build_image.sh

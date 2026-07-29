@@ -152,7 +152,7 @@ isr_handler_noerr i
 %endrep
 
 isr_handler_noerr 127 ; Scheduler yield
-isr_handler_noerr 128 ; Possibly future syscall
+isr_handler_noerr 128 ; Syscall
 
 ; Dynamic vector allocation
 %assign i 129

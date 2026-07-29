@@ -1,3 +1,5 @@
+.PHONY: run debug
+
 run: image
 	qemu-system-x86_64 \
 		-machine q35,accel=kvm \

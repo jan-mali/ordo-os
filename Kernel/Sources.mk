@@ -1,6 +1,6 @@
-CPP_SOURCES := $(shell find Kernel Lib -type f -name '*.cpp')
-C_SOURCES   := $(shell find Kernel Lib -type f -name '*.c')
-ASM_SOURCES := $(shell find Kernel Lib -type f -name '*.asm')
+CPP_SOURCES := $(shell find . -type f -name '*.cpp')
+C_SOURCES   := $(shell find . -type f -name '*.c')
+ASM_SOURCES := $(shell find . -type f -name '*.asm')
 
 OBJECTS := \
     $(CPP_SOURCES:%.cpp=$(BUILD_DIR)/%.o) \

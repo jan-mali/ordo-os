@@ -197,7 +197,14 @@ void init_stage2(void*) {
 
 	VFS::VFS::mount_root_filesystem(root_fs);
 
-	VFS::debug_list_directory(root_fs->root());
+	auto* root_directory = root_fs->root();
+	auto* bin_directory = root_directory->lookup("bin");
+
+	Logger::log_info("Contents of /:\n");
+	VFS::debug_list_directory(root_directory);
+
+	Logger::log_info("Contents of /bin/:\n");
+	VFS::debug_list_directory(bin_directory);
 
 	uint8_t buffer[32];
 

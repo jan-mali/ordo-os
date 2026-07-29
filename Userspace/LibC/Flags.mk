@@ -5,7 +5,6 @@ COMMON_WARNINGS := \
 
 COMMON_FLAGS := \
     -ffreestanding \
-    -frtti \
     -fno-exceptions \
     -fno-stack-protector \
     -fno-builtin \
@@ -22,8 +21,7 @@ COMMON_FLAGS := \
     -mno-sse4.2 \
     -mno-avx \
     -mno-red-zone \
-    -march=x86-64 \
-    -mcmodel=kernel
+    -march=x86-64
 
 CFLAGS := \
     $(COMMON_WARNINGS) \
@@ -35,6 +33,7 @@ CFLAGS := \
 CXXFLAGS := \
     $(COMMON_WARNINGS) \
     $(COMMON_FLAGS) \
+    -frtti \
     -std=$(CXX_STANDARD) \
     -MMD -MP \
     $(INCLUDE_FLAGS)
@@ -44,9 +43,3 @@ ASFLAGS := \
 
 CFLAGS   += -O2 -g
 CXXFLAGS += -O2 -g
-
-LDFLAGS := \
-    -nostdlib \
-    -T Boot/linker.ld
-
-LIBS := -lgcc -lsupc++

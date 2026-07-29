@@ -31,6 +31,10 @@ align 16
     idt_gate_null 0, 0xF
 %endmacro
 
+%macro idt_gate_syscall 0
+    idt_gate_null 3, 0xE
+%endmacro
+
 idt:
     ; Fault - instruction execution failed, can recover
     ; Trap - an error was detected after the instruction was executed
@@ -74,8 +78,8 @@ idt:
 
 times 2 * 79 dq 0 ; 79 empty entries, 0x30-0x7e
 
-    idt_gate_intr ; 0x7f 127, Scheduler yield
-    idt_gate_intr ; 0x80 128, Possibly future syscall
+    idt_gate_intr    ; 0x7f 127, Scheduler yield
+    idt_gate_syscall ; 0x80 128, Syscall
 
 %rep 126
     idt_gate_intr ; 0x81-0xfe, Dynamically allocatable entries

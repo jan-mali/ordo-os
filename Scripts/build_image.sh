@@ -5,7 +5,7 @@ IMG=disk.img
 SIZE=512M
 
 BOOT_LIMINE=Boot/Limine
-KERNEL=Build/kernel.elf
+KERNEL=Build/Kernel/kernel.elf
 
 WORK=Build/mount
 ROOTFS=$WORK/rootfs
@@ -13,6 +13,8 @@ ROOTFS=$WORK/rootfs
 INITRAMFS=Initramfs
 INITRAMFS_TAR=Build/initramfs.tar
 ROOT=Base
+
+INIT_BINARY=Build/Userspace/init/init
 
 rm -f "$IMG"
 truncate -s "$SIZE" "$IMG"
@@ -47,6 +49,9 @@ sudo cp Boot/limine.conf \
     "$WORK/esp/boot/"
 
 sudo cp -a "$ROOT"/. "$ROOTFS"/
+
+# Init
+sudo cp -a "$INIT_BINARY" "$ROOTFS"/bin/init
 
 echo "Creating initramfs..."
 
