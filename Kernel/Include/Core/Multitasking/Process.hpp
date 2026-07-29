@@ -12,6 +12,8 @@ struct Process {
 	Thread* main_thread;
 
 	uint64_t elf_entry;
+
+	bool is_user_logging;
 };
 
 Process* create_process(const char* path);

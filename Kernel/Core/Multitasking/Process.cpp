@@ -13,6 +13,7 @@ Process* create_process(const char* path) {
 
 	process->address_space = Paging::AddressSpace::create_kernel_address_space();
 	process->id = ++max_process_id;
+	process->is_user_logging = false;
 
 	ELFImage elf;
 

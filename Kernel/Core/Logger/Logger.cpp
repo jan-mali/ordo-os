@@ -65,15 +65,14 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 
 	// TODO: Extend this to show more task information
 	if (Multitasking::scheduler && Multitasking::scheduler->current_thread()) {
-		// TODO: Extend this to show the current permission level
-		if (false) {
+		Multitasking::Thread* thread = Multitasking::scheduler->current_thread();
+		if (thread->process && thread->process->is_user_logging) {
 			serial.write("\x1b[93m");
 			text_console.set_color(0xfff176, 0);
 		} else {
 			serial.write("\x1b[96m");
 			text_console.set_color(0x00e5ff, 0);
 		}
-		Multitasking::Thread* thread = Multitasking::scheduler->current_thread();
 		if (thread->process) {
 			// TODO: Print process name if different from thread name
 			// kprintf("process-name/");
