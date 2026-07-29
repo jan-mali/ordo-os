@@ -1,4 +1,5 @@
 #include <Arch/x86_64/Serial.hpp>
+#include <Core/Multitasking/Process.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/TextConsole.hpp>
@@ -73,12 +74,11 @@ void vlog(LogLevel level, const char* fmt, va_list args) {
 			text_console.set_color(0x00e5ff, 0);
 		}
 		Multitasking::Thread* thread = Multitasking::scheduler->current_thread();
-		// kprintf("no-name(no-pid:%d)", thread->id);
 		if (thread->process) {
 			// TODO: Print process name if different from thread name
-			kprintf("process-name/");
+			// kprintf("process-name/");
 		}
-		kprintf("%s(%d:%d)", *thread->name ? thread->name : "unnamed thread", thread->process ? 0 /* TODO: PID */ : 0, thread->id);
+		kprintf("%s(%d:%d)", *thread->name ? thread->name : "unnamed thread", thread->process ? thread->process->id : 0, thread->id);
 	} else {
 		serial.write("\x1b[96m");
 		text_console.set_color(0x00e5ff, 0);
