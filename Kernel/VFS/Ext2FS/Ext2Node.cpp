@@ -229,31 +229,119 @@ bool Ext2Node::get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, c
 }
 
 bool Ext2Node::get_data_block(uint32_t index, uint32_t* block) {
+	uint32_t ptrs = fs->block_size / sizeof(uint32_t);
+
 	// Direct blocks
 	if (index < 12) {
 		*block = inode.direct_blocks[index];
 		return true;
 	}
 
-	// Single indirect
 	index -= 12;
 
-	if (index >= fs->block_size / sizeof(uint32_t)) {
-		return false;
+	// Single indirect
+	if (index < ptrs) {
+		if (inode.singly_indirect_block == 0) {
+			*block = 0;
+			return true;
+		}
+
+		uint32_t indirect[ptrs];
+
+		if (!fs->device->read_bytes(fs->block_address(inode.singly_indirect_block), fs->block_size, reinterpret_cast<uint8_t*>(indirect))) {
+			return false;
+		}
+
+		*block = indirect[index];
+		return true;
 	}
 
-	if (inode.singly_indirect_block == 0) {
+	index -= ptrs;
+
+	// Double indirect
+	uint64_t double_capacity = (uint64_t)ptrs * ptrs;
+
+	if (index < double_capacity) {
+		if (inode.doubly_indirect_block == 0) {
+			*block = 0;
+			return true;
+		}
+
+		uint32_t doubly[ptrs];
+
+		if (!fs->device->read_bytes(fs->block_address(inode.doubly_indirect_block), fs->block_size, reinterpret_cast<uint8_t*>(doubly))) {
+			return false;
+		}
+
+		uint32_t first = index / ptrs;
+		uint32_t second = index % ptrs;
+
+		if (doubly[first] == 0) {
+			*block = 0;
+			return true;
+		}
+
+		uint32_t singly[ptrs];
+
+		if (!fs->device->read_bytes(fs->block_address(doubly[first]), fs->block_size, reinterpret_cast<uint8_t*>(singly))) {
+			return false;
+		}
+
+		*block = singly[second];
+		return true;
+	}
+
+	index -= double_capacity;
+
+	// Triple indirect
+	uint64_t triple_capacity = (uint64_t)ptrs * ptrs * ptrs;
+
+	if (index >= triple_capacity) {
+		return false; // file too large
+	}
+
+	if (inode.triply_indirect_block == 0) {
 		*block = 0;
 		return true;
 	}
 
-	uint32_t indirect_block[fs->block_size / sizeof(uint32_t)];
+	uint32_t triply[ptrs];
 
-	if (!fs->device->read_bytes(fs->block_address(inode.singly_indirect_block), fs->block_size, reinterpret_cast<uint8_t*>(indirect_block))) {
+	if (!fs->device->read_bytes(fs->block_address(inode.triply_indirect_block), fs->block_size, reinterpret_cast<uint8_t*>(triply))) {
 		return false;
 	}
 
-	*block = indirect_block[index];
+	uint32_t first = index / (ptrs * ptrs);
+	uint32_t remainder = index % (ptrs * ptrs);
+
+	uint32_t second = remainder / ptrs;
+	uint32_t third = remainder % ptrs;
+
+	// triply[first] -> doubly indirect block
+	if (triply[first] == 0) {
+		*block = 0;
+		return true;
+	}
+
+	uint32_t doubly[ptrs];
+
+	if (!fs->device->read_bytes(fs->block_address(triply[first]), fs->block_size, reinterpret_cast<uint8_t*>(doubly))) {
+		return false;
+	}
+
+	// doubly[second] -> singly indirect block
+	if (doubly[second] == 0) {
+		*block = 0;
+		return true;
+	}
+
+	uint32_t singly[ptrs];
+
+	if (!fs->device->read_bytes(fs->block_address(doubly[second]), fs->block_size, reinterpret_cast<uint8_t*>(singly))) {
+		return false;
+	}
+
+	*block = singly[third];
 	return true;
 }
 
