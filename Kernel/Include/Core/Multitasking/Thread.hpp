@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
-struct Process;
-
 namespace Multitasking {
+
+struct Process;
 
 enum class ThreadState {
 	Ready,
@@ -44,6 +44,10 @@ struct Thread {
 	void* stack_top;
 	size_t stack_size;
 
+	void* user_stack_base;
+	void* user_stack_top;
+	size_t user_stack_size;
+
 	ThreadState state;
 
 	char name[32];
@@ -54,6 +58,7 @@ struct Thread {
 	Process* process;
 };
 
-Thread* create_thread(void (*entry)(void*), void* argument, const char* name);
+Thread* create_kernel_thread(void (*entry)(void*), void* argument, const char* name);
+Thread* create_user_thread(Process* process, const char* name);
 
 }

@@ -7,6 +7,7 @@
 #include <Core/MM/KernelVMM.hpp>
 #include <Core/MM/PMM.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
+#include <Core/Multitasking/Syscall.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/TextConsole.hpp>
 #include <Logger/Logger.hpp>
@@ -152,11 +153,17 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 				Logger::log_debug("Monotonic time is approximately %lld milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
 			}
 			if (scancode == 63) { // F5
-				Multitasking::scheduler->add_thread(Multitasking::create_thread(timer_demo, nullptr, "timer_demo"));
+				Multitasking::scheduler->add_thread(Multitasking::create_kernel_thread(timer_demo, nullptr, "timer_demo"));
 			}
 		}
 
 		ACPI::Interrupts::interrupt_manager->lapic().eoi();
+		return 0;
+	}
+
+	if (registers->int_no == 128) {
+		// Syscall
+		Multitasking::handle_syscall(registers);
 		return 0;
 	}
 

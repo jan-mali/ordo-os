@@ -1,5 +1,7 @@
+#include <Arch/x86_64/GDT.hpp>
 #include <Arch/x86_64/Interrupts.hpp>
 #include <Core/ACPI/Timer.hpp>
+#include <Core/Multitasking/Process.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/Panic.hpp>
@@ -84,6 +86,12 @@ uint64_t Scheduler::yield_from_interrupt(Registers* regs) {
 	current = next;
 	thread_index = next_index;
 
+	if (current->process) {
+		current->process->address_space.activate();
+	}
+
+	GDT::tss.rsp0 = reinterpret_cast<uint64_t>(current->stack_top);
+
 	// Logger::log_debug("About to schedule thread %d, rsp=%016llX\n", current->id, current->interrupt_rsp);
 
 	return next->interrupt_rsp;
@@ -162,7 +170,7 @@ void init() {
 	scheduler = new Scheduler();
 
 	// Create the idle task
-	idle_task_thread = Multitasking::create_thread(idle_task, nullptr, "idle_task");
+	idle_task_thread = Multitasking::create_kernel_thread(idle_task, nullptr, "idle_task");
 
 	Logger::log_info("Multitasking is initialized.\n");
 }

@@ -9,6 +9,7 @@
 #include <Core/MM/PMM.hpp>
 #include <Core/MM/Paging.hpp>
 #include <Core/Multitasking/FinalizerTask.hpp>
+#include <Core/Multitasking/Process.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Thread.hpp>
 #include <Core/PCI/PCI.hpp>
@@ -167,7 +168,7 @@ extern "C" void kmain() {
 	Multitasking::init();
 	Multitasking::FinalizerTask::start();
 
-	Multitasking::scheduler->add_thread(Multitasking::create_thread(init_stage2, nullptr, "init_stage2"));
+	Multitasking::scheduler->add_thread(Multitasking::create_kernel_thread(init_stage2, nullptr, "init_stage2"));
 
 	// The Scheduler also enables interrupts
 	Multitasking::scheduler->start();
@@ -206,27 +207,5 @@ void init_stage2(void*) {
 	Logger::log_info("Contents of /bin/:\n");
 	VFS::debug_list_directory(bin_directory);
 
-	uint8_t buffer[32];
-
-	memset(buffer, 0, sizeof(buffer));
-
-	VFS::OpenFile* test = VFS::VFS::open("/test.txt");
-	if (test) {
-		test->read(sizeof(buffer) - 1, buffer);
-		VFS::VFS::close(test);
-		Logger::log_info("test.txt: \"%s\"\n", buffer);
-	} else {
-		Logger::log_error("Failed to open /test.txt\n");
-	}
-
-	memset(buffer, 0, sizeof(buffer));
-
-	test = VFS::VFS::open("/secrets/hello.txt");
-	if (test) {
-		test->read(sizeof(buffer) - 1, buffer);
-		VFS::VFS::close(test);
-		Logger::log_info("hello.txt: \"%s\"\n", buffer);
-	} else {
-		Logger::log_error("Failed to open /secrets/hello.txt\n");
-	}
+	Multitasking::Process* init_process = Multitasking::create_process("/bin/init");
 }

@@ -9,7 +9,7 @@
 namespace Multitasking {
 
 void FinalizerTask::start() {
-	scheduler->add_thread(create_thread(finalizer_task, nullptr, "finalizer_task"));
+	scheduler->add_thread(create_kernel_thread(finalizer_task, nullptr, "finalizer_task"));
 }
 
 void FinalizerTask::finalizer_task(void*) {
