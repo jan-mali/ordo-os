@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Result.hpp>
 #include <VFS/VFSNode.hpp>
 
 namespace VFS {
@@ -17,14 +18,14 @@ struct OpenFile {
 	// TODO
 	uint32_t flags;
 
-	uint64_t read(uint64_t bytes, uint8_t* buffer) {
-		uint64_t result = node->read(offset, bytes, buffer);
+	Result<uint64_t> read(uint64_t bytes, uint8_t* buffer) {
+		uint64_t result = TRY(node->read(offset, bytes, buffer));
 		offset += result;
 		return result;
 	}
 
-	uint64_t write(uint64_t bytes, uint8_t* buffer) {
-		uint64_t result = node->write(offset, bytes, buffer);
+	Result<uint64_t> write(uint64_t bytes, uint8_t* buffer) {
+		uint64_t result = TRY(node->write(offset, bytes, buffer));
 		offset += result;
 		return result;
 	}

@@ -196,10 +196,10 @@ void init_stage2(void*) {
 		panic("Failed to mount the root filesystem.\n");
 	}
 
-	VFS::VFS::mount_root_filesystem(root_fs);
+	MUST(VFS::VFS::mount_root_filesystem(root_fs));
 
 	auto* root_directory = root_fs->root();
-	auto* bin_directory = root_directory->lookup("bin");
+	auto* bin_directory = MUST(root_directory->lookup("bin"));
 
 	Logger::log_info("Contents of /:\n");
 	VFS::debug_list_directory(root_directory);

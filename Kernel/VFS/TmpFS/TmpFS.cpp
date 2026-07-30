@@ -1,3 +1,4 @@
+#include <Core/Result.hpp>
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -7,10 +8,12 @@
 
 namespace VFS::TmpFS {
 
-uint64_t TmpFSNode::read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+Result<uint64_t> TmpFSNode::read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
 	if (type != VFSNodeType::File) {
-		Logger::log_error("TmpFS: Attempted to read from a Directory node.\n");
-		return 0;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::IsDirectory
+		};
 	}
 
 	if (offset + bytes > file_size) {
@@ -22,10 +25,12 @@ uint64_t TmpFSNode::read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
 	return bytes;
 }
 
-uint64_t TmpFSNode::write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+Result<uint64_t> TmpFSNode::write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
 	if (type != VFSNodeType::File) {
-		Logger::log_error("TmpFS: Attempted to read from a Directory node.\n");
-		return 0;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::IsDirectory
+		};
 	}
 
 	if (offset + bytes > file_size) {
@@ -39,18 +44,34 @@ uint64_t TmpFSNode::write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
 	return bytes;
 }
 
-uint64_t TmpFSNode::size() {
+Result<uint64_t> TmpFSNode::size() {
+	if (type != VFSNodeType::File) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::IsDirectory
+		};
+	}
+
 	return file_size;
 }
 
-uint64_t TmpFSNode::entry_count() {
+Result<uint64_t> TmpFSNode::entry_count() {
+	if (type != VFSNodeType::Directory) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
+	}
+
 	return entries.size();
 }
 
-TmpFSNode* TmpFSNode::lookup(const char* name) {
+Result<VFSNode*> TmpFSNode::lookup(const char* name) {
 	if (type != VFSNodeType::Directory) {
-		Logger::log_error("TmpFS: Attempted to lookup directory \"%s\" in a File node.\n");
-		return nullptr;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
 	}
 
 	for (auto file : entries) {
@@ -59,24 +80,23 @@ TmpFSNode* TmpFSNode::lookup(const char* name) {
 		}
 	}
 
-	return nullptr;
+	return Errors::not_found(ErrorDomain::FileSystem);
 }
 
-TmpFSNode* TmpFSNode::mkdir(const char* name) {
+Result<VFSNode*> TmpFSNode::mkdir(const char* name) {
 	if (type != VFSNodeType::Directory) {
-		Logger::log_error("TmpFS: Attempted to create directory \"%s\" in a File node.\n");
-		return nullptr;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
 	}
 
 	for (auto file : entries) {
 		if (strcmp(file.name, name) == 0) {
-			if (file.node->type == VFSNodeType::Directory) {
-				Logger::log_warning("TmpFS: The directory \"%s\" already exists.\n");
-				return file.node;
-			} else {
-				Logger::log_error("TmpFS: The node \"%s\" already exists and is not a Directory.\n");
-				return nullptr;
-			}
+			return Error {
+				.domain = ErrorDomain::FileSystem,
+				.code = ErrorCode::AlreadyExists
+			};
 		}
 	}
 
@@ -89,22 +109,19 @@ TmpFSNode* TmpFSNode::mkdir(const char* name) {
 	return directory;
 }
 
-TmpFSNode* TmpFSNode::create(const char* name) {
+Result<VFSNode*> TmpFSNode::create(const char* name) {
 	if (type != VFSNodeType::Directory) {
-		Logger::log_error("TmpFS: Attempted to create file \"%s\" in a File node.\n");
-		return nullptr;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
 	}
 
 	for (auto file : entries) {
-		if (strcmp(file.name, name) == 0) {
-			if (file.node->type == VFSNodeType::File) {
-				Logger::log_warning("TmpFS: The file \"%s\" already exists.\n");
-				return file.node;
-			} else {
-				Logger::log_error("TmpFS: The node \"%s\" already exists and is not a File.\n");
-				return nullptr;
-			}
-		}
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::AlreadyExists
+		};
 	}
 
 	TmpFSNode* file = new TmpFSNode();
@@ -119,14 +136,19 @@ TmpFSNode* TmpFSNode::create(const char* name) {
 	return file;
 }
 
-bool TmpFSNode::readdir(uint64_t index, DirectoryEntry* entry) {
+Result<void> TmpFSNode::readdir(uint64_t index, DirectoryEntry* entry) {
 	if (type != VFSNodeType::Directory) {
-		Logger::log_error("TmpFS: Attempted to readdir a non-Directory node.\n");
-		return false;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
 	}
 
 	if (index >= entries.size()) {
-		return false;
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotFound
+		};
 	}
 
 	TmpFSDirectoryEntry e = entries[index];
@@ -141,7 +163,7 @@ bool TmpFSNode::readdir(uint64_t index, DirectoryEntry* entry) {
 
 	entry->type = e.node->type;
 
-	return true;
+	return {};
 }
 
 void TmpFSNode::dump(int indent) {

@@ -1,3 +1,4 @@
+#include <Core/Result.hpp>
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Utility/String.hpp>
@@ -35,109 +36,76 @@ Ext2Node::Ext2Node(Ext2FS* fs, uint32_t inode_number)
 	}
 }
 
-uint64_t Ext2Node::read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
-	if (offset >= inode.size_low32) {
-		return 0;
+Result<uint64_t> Ext2Node::read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+	if (type != VFSNodeType::File) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::IsDirectory
+		};
 	}
 
-	if (offset + bytes > inode.size_low32) {
-		bytes = inode.size_low32 - offset;
-	}
-
-	uint64_t bytes_read = 0;
-
-	while (bytes_read < bytes) {
-		uint64_t current_offset = offset + bytes_read;
-
-		uint32_t block_index = current_offset / fs->block_size;
-		uint32_t block_offset = current_offset % fs->block_size;
-
-		uint32_t block;
-
-		if (!get_data_block(block_index, &block)) {
-			break;
-		}
-
-		uint64_t chunk = fs->block_size - block_offset;
-
-		if (chunk > bytes - bytes_read)
-			chunk = bytes - bytes_read;
-
-		// Sparse block
-		if (block == 0) {
-			memset(buffer + bytes_read, 0, chunk);
-			bytes_read += chunk;
-			continue;
-		}
-
-		uint64_t address = fs->block_address(block);
-
-		if (!fs->device->read_bytes(address + block_offset, chunk, buffer + bytes_read)) {
-			break;
-		}
-
-		bytes_read += chunk;
-	}
-
-	return bytes_read;
+	return inode_read(offset, bytes, buffer);
 }
 
-uint64_t Ext2Node::write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
-	(void)offset;
-	(void)bytes;
-	(void)buffer;
+Result<uint64_t> Ext2Node::write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+	if (type != VFSNodeType::File) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::IsDirectory
+		};
+	}
 
-	// TODO: Add write support
-
-	return 0;
+	return inode_write(offset, bytes, buffer);
 }
 
-uint64_t Ext2Node::size() {
+Result<uint64_t> Ext2Node::size() {
 	// TODO: Support large files
 	return inode.size_low32;
 }
 
-Ext2Node* Ext2Node::lookup(const char* name) {
-	if (type != VFSNodeType::Directory)
-		return nullptr;
+Result<VFSNode*> Ext2Node::lookup(const char* name) {
+	if (type != VFSNodeType::Directory) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
+	}
 
-	uint64_t count = entry_count();
+	uint64_t count = TRY(entry_count());
 
 	char entry_name[256];
 	Ext2DirectoryEntry raw_entry;
 
 	for (uint64_t i = 0; i < count; i++) {
-		if (!get_directory_entry(i, &raw_entry, entry_name, sizeof(entry_name))) {
-			return nullptr;
-		}
+		TRY(get_directory_entry(i, &raw_entry, entry_name, sizeof(entry_name)));
 
 		if (strcmp(entry_name, name) == 0) {
 			return fs->get_inode(raw_entry.inode);
 		}
 	}
 
-	return nullptr;
+	return Errors::not_found(ErrorDomain::FileSystem);
 }
 
-Ext2Node* Ext2Node::mkdir(const char* name) {
+Result<VFSNode*> Ext2Node::mkdir(const char* name) {
 	(void)name;
 
-	// TODO: Add write support
-
-	return nullptr;
+	return Errors::not_implemented();
 }
 
-Ext2Node* Ext2Node::create(const char* name) {
+Result<VFSNode*> Ext2Node::create(const char* name) {
 	(void)name;
 
-	// TODO: Add write support
-
-	return nullptr;
+	return Errors::not_implemented();
 }
 
-uint64_t Ext2Node::entry_count() {
-	if (type != VFSNodeType::Directory)
-		return 0;
+Result<uint64_t> Ext2Node::entry_count() {
+	if (type != VFSNodeType::Directory) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::NotDirectory
+		};
+	}
 
 	uint64_t offset = 0;
 	uint64_t count = 0;
@@ -145,7 +113,7 @@ uint64_t Ext2Node::entry_count() {
 	Ext2DirectoryEntry entry;
 
 	while (offset < inode.size_low32) {
-		if (read(offset, sizeof(entry), reinterpret_cast<uint8_t*>(&entry)) != sizeof(entry)) {
+		if (TRY(inode_read(offset, sizeof(entry), reinterpret_cast<uint8_t*>(&entry))) != sizeof(entry)) {
 			break;
 		}
 
@@ -162,13 +130,11 @@ uint64_t Ext2Node::entry_count() {
 	return count;
 }
 
-bool Ext2Node::readdir(uint64_t index, DirectoryEntry* entry) {
+Result<void> Ext2Node::readdir(uint64_t index, DirectoryEntry* entry) {
 	Ext2DirectoryEntry ext2_entry;
 	char name[256];
 
-	if (!get_directory_entry(index, &ext2_entry, name, sizeof(name))) {
-		return false;
-	}
+	TRY(get_directory_entry(index, &ext2_entry, name, sizeof(name)));
 
 	strncpy(entry->name, name, sizeof(entry->name));
 	entry->name[sizeof(entry->name) - 1] = '\0';
@@ -176,47 +142,47 @@ bool Ext2Node::readdir(uint64_t index, DirectoryEntry* entry) {
 	Ext2Node* node = fs->get_inode(ext2_entry.inode);
 
 	if (!node) {
-		return false;
+		return Errors::not_found(ErrorDomain::FileSystem);
 	}
 
 	entry->type = node->type;
 
-	return true;
+	return {};
 }
 
 FileSystem* Ext2Node::filesystem() {
 	return fs;
 }
 
-bool Ext2Node::get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, char* name_buffer, size_t name_buffer_size) {
+Result<void> Ext2Node::get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, char* name_buffer, size_t name_buffer_size) {
 	uint64_t offset = 0;
 	uint64_t current = 0;
 
 	Ext2DirectoryEntry header;
 
 	while (offset < inode.size_low32) {
-		if (read(offset, sizeof(Ext2DirectoryEntry), reinterpret_cast<uint8_t*>(&header)) != sizeof(Ext2DirectoryEntry))
-			return false;
+		if (TRY(inode_read(offset, sizeof(Ext2DirectoryEntry), reinterpret_cast<uint8_t*>(&header))) != sizeof(Ext2DirectoryEntry))
+			return Error { ErrorDomain::FileSystem, ErrorCode::ReadError };
 
 		// Corrupted directory
 		if (header.entry_length < sizeof(Ext2DirectoryEntry))
-			return false;
+			return Error { ErrorDomain::FileSystem, ErrorCode::ReadError };
 
 		// Skip unused entries
 		if (header.inode != 0) {
 			if (current == index) {
 				if (header.name_length >= name_buffer_size) {
-					return false;
+					return Error { ErrorDomain::FileSystem, ErrorCode::BufferTooSmall };
 				}
 
-				if (read(offset + sizeof(Ext2DirectoryEntry), header.name_length, reinterpret_cast<uint8_t*>(name_buffer)) != header.name_length) {
-					return false;
+				if (TRY(inode_read(offset + sizeof(Ext2DirectoryEntry), header.name_length, reinterpret_cast<uint8_t*>(name_buffer))) != header.name_length) {
+					return Error { ErrorDomain::FileSystem, ErrorCode::ReadError };
 				}
 
 				name_buffer[header.name_length] = '\0';
 
 				*result = header;
-				return true;
+				return {};
 			}
 
 			current++;
@@ -225,7 +191,7 @@ bool Ext2Node::get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, c
 		offset += header.entry_length;
 	}
 
-	return false;
+	return Error { ErrorDomain::FileSystem, ErrorCode::NotFound };
 }
 
 bool Ext2Node::get_data_block(uint32_t index, uint32_t* block) {
@@ -343,6 +309,64 @@ bool Ext2Node::get_data_block(uint32_t index, uint32_t* block) {
 
 	*block = singly[third];
 	return true;
+}
+
+Result<uint64_t> Ext2Node::inode_read(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+	if (offset >= inode.size_low32) {
+		return Error {
+			.domain = ErrorDomain::FileSystem,
+			.code = ErrorCode::EndOfFile
+		};
+	}
+
+	if (offset + bytes > inode.size_low32) {
+		bytes = inode.size_low32 - offset;
+	}
+
+	uint64_t bytes_read = 0;
+
+	while (bytes_read < bytes) {
+		uint64_t current_offset = offset + bytes_read;
+
+		uint32_t block_index = current_offset / fs->block_size;
+		uint32_t block_offset = current_offset % fs->block_size;
+
+		uint32_t block;
+
+		if (!get_data_block(block_index, &block)) {
+			break;
+		}
+
+		uint64_t chunk = fs->block_size - block_offset;
+
+		if (chunk > bytes - bytes_read)
+			chunk = bytes - bytes_read;
+
+		// Sparse block
+		if (block == 0) {
+			memset(buffer + bytes_read, 0, chunk);
+			bytes_read += chunk;
+			continue;
+		}
+
+		uint64_t address = fs->block_address(block);
+
+		if (!fs->device->read_bytes(address + block_offset, chunk, buffer + bytes_read)) {
+			break;
+		}
+
+		bytes_read += chunk;
+	}
+
+	return bytes_read;
+}
+
+Result<uint64_t> Ext2Node::inode_write(uint64_t offset, uint64_t bytes, uint8_t* buffer) {
+	(void)offset;
+	(void)bytes;
+	(void)buffer;
+
+	return Errors::not_implemented();
 }
 
 };

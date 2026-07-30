@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Result.hpp>
 #include <Utility/Vector.hpp>
 #include <VFS/FileSystem.hpp>
 #include <VFS/OpenFile.hpp>
@@ -15,15 +16,15 @@ struct MountPoint {
 
 class VFS {
 public:
-	static void mount_root_filesystem(FileSystem* fs);
-	static bool mount(FileSystem* fs, const char* path);
-	static bool mount(VFSNode* node, const char* path);
-	static bool mount(FileSystem* fs, VFSNode* target);
-	static bool mount(VFSNode* node, VFSNode* target);
-	static VFSNode* resolve(const char* path);
+	static Result<void> mount_root_filesystem(FileSystem* fs);
+	static Result<void> mount(FileSystem* fs, const char* path);
+	static Result<void> mount(VFSNode* node, const char* path);
+	static Result<void> mount(FileSystem* fs, VFSNode* target);
+	static Result<void> mount(VFSNode* node, VFSNode* target);
+	static Result<VFSNode*> resolve(const char* path);
 
-	static OpenFile* open(const char* path);
-	static void close(OpenFile* file);
+	static Result<OpenFile*> open(const char* path);
+	static Result<void> close(OpenFile* file);
 
 private:
 	static FileSystem* root_fs;

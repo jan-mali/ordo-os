@@ -1,3 +1,4 @@
+#include <Core/Result.hpp>
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Logger/kstdio.hpp>
@@ -14,36 +15,38 @@ FileSystem* VFS::root_fs;
 VFSNode* VFS::root_node;
 Vector<MountPoint> VFS::mounts;
 
-void VFS::mount_root_filesystem(FileSystem* fs) {
+Result<void> VFS::mount_root_filesystem(FileSystem* fs) {
 	Logger::log_info("VFS: Mounting the root filesystem.\n");
 
 	root_fs = fs;
 	root_node = fs->root();
+
+	return {};
 }
 
-bool VFS::mount(FileSystem* fs, const char* path) {
-	VFSNode* target = resolve(path);
+Result<void> VFS::mount(FileSystem* fs, const char* path) {
+	VFSNode* target = TRY(resolve(path));
 	return mount(fs, target);
 }
 
-bool VFS::mount(VFSNode* node, const char* path) {
-	VFSNode* target = resolve(path);
+Result<void> VFS::mount(VFSNode* node, const char* path) {
+	VFSNode* target = TRY(resolve(path));
 	return mount(node, target);
 }
 
-bool VFS::mount(FileSystem* fs, VFSNode* target) {
+Result<void> VFS::mount(FileSystem* fs, VFSNode* target) {
 	// TODO: Add error checking
 	mounts.push_back({ .location = target, .fs = fs, .root = fs->root() });
-	return true;
+	return {};
 }
 
-bool VFS::mount(VFSNode* node, VFSNode* target) {
+Result<void> VFS::mount(VFSNode* node, VFSNode* target) {
 	// TODO: Add error checking
 	mounts.push_back({ .location = target, .fs = node->filesystem(), .root = node });
-	return true;
+	return {};
 }
 
-VFSNode* VFS::resolve(const char* path) {
+Result<VFSNode*> VFS::resolve(const char* path) {
 	char component[512];
 	const char* p = path;
 
@@ -93,17 +96,21 @@ VFSNode* VFS::resolve(const char* path) {
 			continue;
 		}
 
-		VFSNode* next = current->lookup(component);
+		VFSNode* next = TRY(current->lookup(component));
 
 		if (!next) {
 			Logger::kprintf(" - not found\n");
-			return nullptr;
+			return Errors::not_found(ErrorDomain::VFS);
 		}
 
 		// Save current node before moving down
 		if (parent_count >= sizeof(parents) / sizeof(parents[0])) {
 			Logger::log_error("VFS::resolve: path too deep\n");
-			return nullptr;
+			// FIXME: Maybe a better error code
+			return Error {
+				.domain = ErrorDomain::VFS,
+				.code = ErrorCode::StringTooLong
+			};
 		}
 
 		parents[parent_count++] = current;
@@ -130,15 +137,19 @@ VFSNode* VFS::resolve(const char* path) {
 	return current;
 }
 
-OpenFile* VFS::open(const char* path) {
-	VFSNode* node = resolve(path);
+Result<OpenFile*> VFS::open(const char* path) {
+	VFSNode* node = TRY(resolve(path));
 
 	if (!node) {
-		return nullptr;
+		return Errors::not_found(ErrorDomain::VFS);
 	}
 
 	if (node->node_type() != VFSNodeType::File) {
-		return nullptr;
+		// FIXME: Maybe a better error code
+		return Error {
+			.domain = ErrorDomain::VFS,
+			.code = ErrorCode::IsDirectory
+		};
 	}
 
 	OpenFile* file = new OpenFile(node);
@@ -146,12 +157,14 @@ OpenFile* VFS::open(const char* path) {
 	return file;
 }
 
-void VFS::close(OpenFile* file) {
+Result<void> VFS::close(OpenFile* file) {
 	delete file;
+
+	return {};
 }
 
 void debug_list_directory(VFSNode* dir) {
-	uint64_t entry_count = dir->entry_count();
+	uint64_t entry_count = MUST(dir->entry_count());
 
 	Logger::log_info("Directory contains %lld entries:\n", entry_count);
 

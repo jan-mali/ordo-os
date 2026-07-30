@@ -1,5 +1,6 @@
 #include <Core/ELFLoader.hpp>
 #include <Core/MM/PMM.hpp>
+#include <Core/Result.hpp>
 #include <Core/memory.hpp>
 #include <Logger/Logger.hpp>
 #include <Utility/String.hpp>
@@ -89,29 +90,35 @@ struct Elf64_Phdr {
 	uint64_t p_align;
 };
 
-bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& image) {
-	VFS::OpenFile* elf_file = VFS::VFS::open(path);
-
-	if (!elf_file) {
-		return false;
-	}
+Result<void> load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& image) {
+	VFS::OpenFile* elf_file = TRY(VFS::VFS::open(path));
 
 	Elf64_Ehdr header {};
 
-	if (elf_file->read(sizeof(header), reinterpret_cast<uint8_t*>(&header)) != sizeof(header)) {
+	// TODO: Figure out the error propagation here
+	if (MUST(elf_file->read(sizeof(header), reinterpret_cast<uint8_t*>(&header))) != sizeof(header)) {
 		VFS::VFS::close(elf_file);
-		return false;
+		return Error {
+			.domain = ErrorDomain::ELF,
+			.code = ErrorCode::EndOfFile
+		};
 	}
 
 	// ELF magic
 	if (header.e_ident[0] != 0x7f || header.e_ident[1] != 'E' || header.e_ident[2] != 'L' || header.e_ident[3] != 'F') {
 		VFS::VFS::close(elf_file);
-		return false;
+		return Error {
+			.domain = ErrorDomain::ELF,
+			.code = ErrorCode::InvalidELF
+		};
 	}
 
 	if (header.e_ident[4] != ELFCLASS64 || header.e_machine != EM_X86_64) {
 		VFS::VFS::close(elf_file);
-		return false;
+		return Error {
+			.domain = ErrorDomain::ELF,
+			.code = ErrorCode::UnsupportedABI
+		};
 	}
 
 	image.entry = header.e_entry;
@@ -121,9 +128,13 @@ bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& i
 
 		elf_file->offset = header.e_phoff + i * sizeof(Elf64_Phdr);
 
-		if (elf_file->read(sizeof(ph), reinterpret_cast<uint8_t*>(&ph)) != sizeof(ph)) {
+		// TODO: Figure out the error propagation here
+		if (MUST(elf_file->read(sizeof(ph), reinterpret_cast<uint8_t*>(&ph))) != sizeof(ph)) {
 			VFS::VFS::close(elf_file);
-			return false;
+			return Error {
+				.domain = ErrorDomain::ELF,
+				.code = ErrorCode::EndOfFile
+			};
 		}
 
 		if (ph.p_type != PT_LOAD)
@@ -139,7 +150,10 @@ bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& i
 
 			if (!phys) {
 				VFS::VFS::close(elf_file);
-				return false;
+				return Error {
+					.domain = ErrorDomain::ELF,
+					.code = ErrorCode::OutOfMemory
+				};
 			}
 
 			uint64_t flags = static_cast<uint64_t>(Paging::PageFlags::Present) | static_cast<uint64_t>(Paging::PageFlags::User);
@@ -155,7 +169,10 @@ bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& i
 
 			if (!address_space.map(addr, phys, flags)) {
 				VFS::VFS::close(elf_file);
-				return false;
+				return Error {
+					.domain = ErrorDomain::ELF,
+					.code = ErrorCode::OutOfMemory
+				};
 			}
 
 			memset(reinterpret_cast<void*>(pmm.translate_to_hhdm(phys)), 0x42, Paging::PAGE_SIZE);
@@ -180,9 +197,13 @@ bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& i
 
 			elf_file->offset = file_offset;
 
-			if (elf_file->read(amount, destination) != amount) {
+			// TODO: Figure out the error propagation here
+			if (MUST(elf_file->read(amount, destination)) != amount) {
 				VFS::VFS::close(elf_file);
-				return false;
+				return Error {
+					.domain = ErrorDomain::ELF,
+					.code = ErrorCode::EndOfFile
+				};
 			}
 
 			virt += amount;
@@ -192,5 +213,5 @@ bool load_elf(const char* path, Paging::AddressSpace& address_space, ELFImage& i
 	}
 
 	VFS::VFS::close(elf_file);
-	return true;
+	return {};
 }

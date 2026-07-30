@@ -31,24 +31,27 @@ public:
 	virtual ~Ext2Node() = default;
 
 	// File services
-	uint64_t read(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
-	uint64_t write(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
-	uint64_t size() override;
+	Result<uint64_t> read(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
+	Result<uint64_t> write(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
+	Result<uint64_t> size() override;
 
 	// Directory services
-	Ext2Node* lookup(const char* name) override;
-	Ext2Node* mkdir(const char* name) override;
-	Ext2Node* create(const char* name) override;
-	uint64_t entry_count() override;
-	bool readdir(uint64_t index, DirectoryEntry* entry) override;
+	Result<VFSNode*> lookup(const char* name) override;
+	Result<VFSNode*> mkdir(const char* name) override;
+	Result<VFSNode*> create(const char* name) override;
+	Result<uint64_t> entry_count() override;
+	Result<void> readdir(uint64_t index, DirectoryEntry* entry) override;
 
 	FileSystem* filesystem() override;
 
 	VFSNodeType node_type() const { return type; }
 
 private:
-	bool get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, char* name_buffer, size_t name_buffer_size);
+	Result<void> get_directory_entry(uint64_t index, Ext2DirectoryEntry* result, char* name_buffer, size_t name_buffer_size);
 	bool get_data_block(uint32_t index, uint32_t* block);
+
+	Result<uint64_t> inode_read(uint64_t offset, uint64_t bytes, uint8_t* buffer);
+	Result<uint64_t> inode_write(uint64_t offset, uint64_t bytes, uint8_t* buffer);
 
 	Ext2FS* fs;
 

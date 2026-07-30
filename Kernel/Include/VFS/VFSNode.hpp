@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Result.hpp>
 #include <cstdint>
 
 namespace VFS {
@@ -22,16 +23,16 @@ public:
 	virtual ~VFSNode() = default;
 
 	// File services
-	virtual uint64_t read(uint64_t offset, uint64_t bytes, uint8_t* buffer) = 0;
-	virtual uint64_t write(uint64_t offset, uint64_t bytes, uint8_t* buffer) = 0;
-	virtual uint64_t size() = 0;
+	virtual Result<uint64_t> read(uint64_t offset, uint64_t bytes, uint8_t* buffer) = 0;
+	virtual Result<uint64_t> write(uint64_t offset, uint64_t bytes, uint8_t* buffer) = 0;
+	virtual Result<uint64_t> size() = 0;
 
 	// Directory services
-	virtual VFSNode* lookup(const char* name) = 0;
-	virtual VFSNode* mkdir(const char* name) = 0;
-	virtual VFSNode* create(const char* name) = 0;
-	virtual uint64_t entry_count() = 0;
-	virtual bool readdir(uint64_t index, DirectoryEntry* entry) = 0;
+	virtual Result<VFSNode*> lookup(const char* name) = 0;
+	virtual Result<VFSNode*> mkdir(const char* name) = 0;
+	virtual Result<VFSNode*> create(const char* name) = 0;
+	virtual Result<uint64_t> entry_count() = 0;
+	virtual Result<void> readdir(uint64_t index, DirectoryEntry* entry) = 0;
 
 	virtual FileSystem* filesystem() = 0;
 

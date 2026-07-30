@@ -18,16 +18,16 @@ public:
 	virtual ~TmpFSNode() = default;
 
 	// File services
-	virtual uint64_t read(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
-	virtual uint64_t write(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
-	virtual uint64_t size() override;
+	virtual Result<uint64_t> read(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
+	virtual Result<uint64_t> write(uint64_t offset, uint64_t bytes, uint8_t* buffer) override;
+	virtual Result<uint64_t> size() override;
 
 	// Directory services
-	virtual TmpFSNode* lookup(const char* name) override;
-	virtual TmpFSNode* mkdir(const char* name) override;
-	virtual TmpFSNode* create(const char* name) override;
-	virtual uint64_t entry_count() override;
-	virtual bool readdir(uint64_t index, DirectoryEntry* entry) override;
+	virtual Result<VFSNode*> lookup(const char* name) override;
+	virtual Result<VFSNode*> mkdir(const char* name) override;
+	virtual Result<VFSNode*> create(const char* name) override;
+	virtual Result<uint64_t> entry_count() override;
+	virtual Result<void> readdir(uint64_t index, DirectoryEntry* entry) override;
 
 	virtual FileSystem* filesystem() override {
 		return fs;
