@@ -4,8 +4,17 @@
 #include <Core/Multitasking/Syscall.hpp>
 #include <Core/Result.hpp>
 #include <Logger/Logger.hpp>
+#include <abi/syscalls.h>
 
 namespace Multitasking {
+
+static constexpr uint64_t sys_ok(uint64_t value) {
+	return value;
+}
+
+static constexpr uint64_t sys_err(int errno_value) {
+	return static_cast<uint64_t>(-static_cast<int64_t>(errno_value));
+}
 
 void handle_syscall(Registers* regs) {
 	uint64_t number = regs->rax;
@@ -18,11 +27,11 @@ void handle_syscall(Registers* regs) {
 		.code = ErrorCode::InvalidArgument
 	};
 
-	switch (number) {
-	case 1:
+	switch (static_cast<Syscall>(number)) {
+	case Syscall::SYS_EXIT:
 		result = sys$exit(a);
 		break;
-	case 2:
+	case Syscall::SYS_WRITE:
 		result = sys$write(a, reinterpret_cast<const char*>(b), c);
 		break;
 	default:
@@ -30,11 +39,12 @@ void handle_syscall(Registers* regs) {
 	}
 
 	if (!result.has_value()) {
-		regs->rax = -1;
+		// TODO: Translate Result<T> errors to POSIX errno
+		regs->rax = sys_err(1);
 		return;
 	}
 
-	regs->rax = result.value();
+	regs->rax = sys_ok(result.value());
 }
 
 Result<uint64_t> sys$exit(int code) {

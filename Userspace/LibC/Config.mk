@@ -4,6 +4,7 @@ C_STANDARD   := c17
 CXX_STANDARD := c++20
 
 INCLUDE_DIRS := \
-    Include
+    Include \
+    ../../Shared
 
 INCLUDE_FLAGS := $(addprefix -I,$(INCLUDE_DIRS))
