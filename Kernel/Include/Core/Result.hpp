@@ -116,6 +116,41 @@ private:
 	bool m_has_value;
 };
 
+template<>
+class Result<void> {
+public:
+	Result() {
+		m_success = true;
+	}
+
+	Result(Error error) {
+		m_success = false;
+		m_error = error;
+	}
+
+	explicit operator bool() const {
+		return m_success;
+	}
+
+	void value() const {
+		if (!m_success) {
+			panic("Result<void> has no value");
+		}
+	}
+
+	Error error() const {
+		return m_error;
+	}
+
+	bool is_error(ErrorCode code) const {
+		return !m_success && m_error.code == code;
+	}
+
+private:
+	bool m_success;
+	Error m_error;
+};
+
 #define TRY(expr) ({        \
 	auto __r = (expr);      \
 	if (!__r)               \
