@@ -153,7 +153,7 @@ extern "C" uint64_t isr_handler(Registers* registers) {
 				Logger::log_debug("Monotonic time is approximately %lld milliseconds.\n", ACPI::Timer::monotonic_time_ns / 1'000'000ULL);
 			}
 			if (scancode == 63) { // F5
-				Multitasking::scheduler->add_thread(Multitasking::create_kernel_thread(timer_demo, nullptr, "timer_demo"));
+				Multitasking::scheduler->add_thread(MUST(Multitasking::create_kernel_thread(timer_demo, nullptr, "timer_demo")));
 			}
 		}
 

@@ -170,7 +170,7 @@ void init() {
 	scheduler = new Scheduler();
 
 	// Create the idle task
-	idle_task_thread = Multitasking::create_kernel_thread(idle_task, nullptr, "idle_task");
+	idle_task_thread = MUST(Multitasking::create_kernel_thread(idle_task, nullptr, "idle_task"));
 
 	Logger::log_info("Multitasking is initialized.\n");
 }

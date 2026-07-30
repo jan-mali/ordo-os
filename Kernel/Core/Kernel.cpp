@@ -168,7 +168,7 @@ extern "C" void kmain() {
 	Multitasking::init();
 	Multitasking::FinalizerTask::start();
 
-	Multitasking::scheduler->add_thread(Multitasking::create_kernel_thread(init_stage2, nullptr, "init_stage2"));
+	Multitasking::scheduler->add_thread(MUST(Multitasking::create_kernel_thread(init_stage2, nullptr, "init_stage2")));
 
 	// The Scheduler also enables interrupts
 	Multitasking::scheduler->start();
@@ -207,5 +207,5 @@ void init_stage2(void*) {
 	Logger::log_info("Contents of /bin/:\n");
 	VFS::debug_list_directory(bin_directory);
 
-	Multitasking::Process* init_process = Multitasking::create_process("/bin/init");
+	Multitasking::Process* init_process = MUST(Multitasking::create_process("/bin/init"));
 }

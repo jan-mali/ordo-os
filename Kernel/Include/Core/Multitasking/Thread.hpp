@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Result.hpp>
 #include <cstddef>
 #include <cstdint>
 
@@ -58,7 +59,7 @@ struct Thread {
 	Process* process;
 };
 
-Thread* create_kernel_thread(void (*entry)(void*), void* argument, const char* name);
-Thread* create_user_thread(Process* process, const char* name);
+Result<Thread*> create_kernel_thread(void (*entry)(void*), void* argument, const char* name);
+Result<Thread*> create_user_thread(Process* process, const char* name);
 
 }

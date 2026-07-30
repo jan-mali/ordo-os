@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/MM/Paging.hpp>
+#include <Core/Result.hpp>
 
 namespace Multitasking {
 
@@ -16,6 +17,6 @@ struct Process {
 	bool is_user_logging;
 };
 
-Process* create_process(const char* path);
+Result<Process*> create_process(const char* path);
 
 }

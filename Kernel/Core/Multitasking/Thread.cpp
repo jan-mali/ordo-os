@@ -16,7 +16,7 @@ static uint64_t max_thread_id = 0;
 
 void thread_entry();
 
-Thread* create_kernel_thread(void (*entry)(void*), void* argument, const char* name) {
+Result<Thread*> create_kernel_thread(void (*entry)(void*), void* argument, const char* name) {
 	Thread* thread = new Thread();
 	uint8_t* stack = reinterpret_cast<uint8_t*>(kernel_vmm.allocate_pages(STACK_PAGES, true));
 	thread->id = ++max_thread_id;
@@ -85,7 +85,7 @@ Thread* create_kernel_thread(void (*entry)(void*), void* argument, const char* n
 	return thread;
 }
 
-Thread* create_user_thread(Process* process, const char* name) {
+Result<Thread*> create_user_thread(Process* process, const char* name) {
 	Thread* thread = new Thread();
 
 	thread->id = ++max_thread_id;

@@ -8,7 +8,7 @@ namespace Multitasking {
 
 static uint64_t max_process_id = 0;
 
-Process* create_process(const char* path) {
+Result<Process*> create_process(const char* path) {
 	Process* process = new Process();
 
 	process->address_space = Paging::AddressSpace::create_kernel_address_space();
@@ -23,7 +23,14 @@ Process* create_process(const char* path) {
 	}
 
 	process->elf_entry = elf.entry;
-	process->main_thread = create_user_thread(process, path);
+
+	Result<Thread*> main_thread_result = create_user_thread(process, path);
+	if (!main_thread_result) {
+		delete process;
+		return main_thread_result.error();
+	}
+
+	process->main_thread = main_thread_result.value();
 
 	scheduler->add_thread(process->main_thread);
 
