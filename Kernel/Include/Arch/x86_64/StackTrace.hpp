@@ -33,7 +33,7 @@ static void stack_trace() {
 		frame = frame->rbp;
 	}
 
-	Logger::log_debug("x86_64-elf-addr2line -e Build/kernel.elf -piasfC");
+	Logger::log_debug("x86_64-elf-addr2line -e Build/Kernel/kernel.elf -piasfC");
 
 	for (int i = 0; frame2 && i < MAX_STACK_UNWIND_LENGTH; i++) {
 		Logger::kprintf(
