@@ -33,6 +33,7 @@ enum class ErrorCode : uint16_t {
 	// Generic
 	InvalidArgument,
 	InvalidAddress,
+	InvalidHandle,
 	PermissionDenied,
 	NotImplemented,
 	OutOfMemory,
@@ -50,6 +51,10 @@ enum class ErrorCode : uint16_t {
 	ReadError,
 	WriteError,
 	EndOfFile,
+
+	// User/kernel boundary
+	BufferTooSmall,
+	StringTooLong,
 
 	// ELF
 	InvalidELF,
@@ -177,6 +182,10 @@ inline Error invalid_address() {
 
 inline Error out_of_memory() {
 	return { ErrorDomain::Memory, ErrorCode::OutOfMemory };
+}
+
+inline Error not_implemented() {
+	return { ErrorDomain::Generic, ErrorCode::NotImplemented };
 }
 
 }

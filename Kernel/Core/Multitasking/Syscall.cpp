@@ -1,6 +1,8 @@
+#include <Core/BufferTools.hpp>
 #include <Core/Multitasking/Process.hpp>
 #include <Core/Multitasking/Scheduler.hpp>
 #include <Core/Multitasking/Syscall.hpp>
+#include <Core/Result.hpp>
 #include <Logger/Logger.hpp>
 
 namespace Multitasking {
@@ -11,23 +13,31 @@ void handle_syscall(Registers* regs) {
 	uint64_t b = regs->rsi;
 	uint64_t c = regs->rdx;
 
+	Result<uint64_t> result = Error {
+		.domain = ErrorDomain::Generic,
+		.code = ErrorCode::InvalidArgument
+	};
+
 	switch (number) {
 	case 1:
-		sys$exit(a);
+		result = sys$exit(a);
 		break;
 	case 2:
-		regs->rax = sys$write(a, reinterpret_cast<const void*>(b), c);
+		result = sys$write(a, reinterpret_cast<const char*>(b), c);
 		break;
 	default:
 		break;
 	}
+
+	if (!result.has_value()) {
+		regs->rax = -1;
+		return;
+	}
+
+	regs->rax = result.value();
 }
 
-static bool is_user_pointer(uint64_t ptr) {
-	return ptr < 0x0000800000000000;
-}
-
-void sys$exit(int code) {
+Result<uint64_t> sys$exit(int code) {
 	// TODO: Handle multiple threads
 	scheduler->current_thread()->state = ThreadState::Dead;
 
@@ -38,20 +48,26 @@ void sys$exit(int code) {
 	}
 }
 
-int sys$write(int fd, const void* user_buffer, uint64_t count) {
+Result<uint64_t> sys$write(int fd, const char* user_buffer, uint64_t count) {
 	Process* process = scheduler->current_thread()->process;
 
-	if (fd != 1 && fd != 2)
-		return -1;
+	if (fd != 1 && fd != 2) {
+		return Error {
+			.domain = ErrorDomain::Process,
+			.code = ErrorCode::InvalidHandle
+		};
+	}
 
-	if (!is_user_pointer(reinterpret_cast<uint64_t>(user_buffer)))
-		return -1;
+	char text_buffer[1024] = "0";
 
-	const char* data = reinterpret_cast<const char*>(user_buffer);
+	// TODO: Use this
+	(void)count;
+
+	TRY(BufferTools::strncpy_from_user(text_buffer, user_buffer, 1024));
 
 	process->is_user_logging = true;
 
-	Logger::log_info("%s", data);
+	Logger::log_info("%s", text_buffer);
 
 	process->is_user_logging = false;
 
